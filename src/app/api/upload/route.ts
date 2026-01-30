@@ -37,13 +37,15 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Subir a Cloudinary
+    // Subir a Cloudinary (SIN categorización de pago)
     const result = await new Promise<any>((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         {
           folder: 'hotel-media',
           resource_type: 'auto', // Detecta imagen/video automáticamente
           invalidate: true,      // Actualiza CDN inmediatamente
+          // 👇 REMOVIDO: categorization y auto_tagging (requieren plan pago)
+          quality_analysis: true, // ✅ Esto SÍ funciona en plan gratuito
         },
         (error, result) => {
           if (error) {
@@ -56,11 +58,13 @@ export async function POST(request: NextRequest) {
       ).end(buffer);
     });
 
-    // Respuesta exitosa
+    // Respuesta exitosa (sin tags, ya que no están disponibles)
     return new Response(JSON.stringify({
       url: result.secure_url,
       type: result.resource_type,
       public_id: result.public_id,
+      // tags: result.tags || [],              // ❌ Eliminado (no disponible)
+      quality_score: result.quality_analysis?.focus || 0, // ✅ Solo calidad
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

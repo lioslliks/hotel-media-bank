@@ -8,4 +8,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Faltan variables de entorno de Supabase');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    flowType: "pkce", // 👈 Esto es clave para Next.js App Router
+    detectSessionInUrl: true,
+  },
+});

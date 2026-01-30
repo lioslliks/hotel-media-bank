@@ -1,3 +1,4 @@
+// src/app/dashboard/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,47 +16,32 @@ interface Organization {
   website: string | null;
   stars: number | null;
   hotel_type: string | null;
+  profile_image: string | null;
 }
-
-interface MediaItem {
-  id: string;
-  url: string;
-  type: string;
-}
-
-const HOTEL_TYPE_LABELS: Record<string, string> = {
-  adults_only: "Solo adultos",
-  family: "Familiar",
-  boutique: "Hotel boutique",
-  luxury: "Lujo",
-  golf: "Golf",
-  sun_and_beach: "Sol y playa",
-  wellness: "Wellness / Spa",
-  urban: "Urbano",
-  budget: "Económico",
-  aparthotel: "Apartahotel",
-};
 
 export default function Dashboard() {
   const [org, setOrg] = useState<Organization | null>(null);
-  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [media, setMedia] = useState<{ url: string; type: string }[]>([]);
   const [approvedHotels, setApprovedHotels] = useState<{ id: string; name: string }[]>([]);
   const [expandedHotelId, setExpandedHotelId] = useState<string | null>(null);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  // ✅ ELIMINADO: const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   useEffect(() => {
     const loadOrg = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
+      
+      if (!sessionData?.session) {
         window.location.href = "/login";
         return;
       }
 
+      const userId = sessionData.session.user.id;
+
       const { data: orgData } = await supabase
         .from("organizations")
         .select("*")
-        .eq("created_by", sessionData.session.user.id)
+        .eq("created_by", userId)
         .maybeSingle();
 
       if (!orgData) {
@@ -65,31 +51,32 @@ export default function Dashboard() {
 
       setOrg(orgData as Organization);
 
-      // Cargar galería si es hotel
+      // Cargar una foto destacada (primera imagen del hotel)
       if (orgData.role === "hotel") {
-        const mediaResponse = await supabase
+        const { data: mediaData } = await supabase
           .from("media")
-          .select("id, url, type")
+          .select("url, type")
           .eq("hotel_id", orgData.id)
-          .order("created_at", { ascending: false });
-        setMedia(mediaResponse.data || []);
+          .order("created_at", { ascending: false })
+          .limit(1);
+        setMedia(mediaData || []);
       }
 
-      // Cargar hoteles aprobados si es agencia
+      // Cargar hoteles aprobados para agencias
       if (orgData.role === "agency") {
-        const accessResponse = await supabase
+        const { data: accessData } = await supabase
           .from("agency_hotel_access")
           .select("hotel_id")
           .eq("agency_id", orgData.id)
           .eq("status", "approved");
 
-        if (accessResponse.data && accessResponse.data.length > 0) {
-          const hotelIds = accessResponse.data.map(a => a.hotel_id);
-          const hotelsResponse = await supabase
+        if (accessData && Array.isArray(accessData)) {
+          const hotelIds = accessData.map((a: { hotel_id: string }) => a.hotel_id);
+          const { data: hotelsData } = await supabase
             .from("organizations")
             .select("id, name")
             .in("id", hotelIds);
-          setApprovedHotels(hotelsResponse.data || []);
+          setApprovedHotels(hotelsData || []);
         }
       }
 
@@ -101,63 +88,225 @@ export default function Dashboard() {
 
   const toggleHotelGallery = (hotelId: string) => {
     if (expandedHotelId === hotelId) {
-      // Ya está expandido → colapsar
       setExpandedHotelId(null);
       setMedia([]);
     } else {
-      // Expandir este hotel
       setExpandedHotelId(hotelId);
-      setError("");
-
       supabase
         .from("media")
-        .select("id, url, type")
+        .select("url, type")
         .eq("hotel_id", hotelId)
         .order("created_at", { ascending: false })
+        // ✅ REMOVIDO: .limit(1) → ahora carga todas las fotos
         .then(({ data }) => setMedia(data || []));
     }
   };
 
-  if (loading) return <p style={{ padding: "2rem" }}>Cargando...</p>;
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#f8fafc"
+      }}>
+        <div>Cargando...</div>
+      </div>
+    );
+  }
+
   if (!org) return null;
 
+  // Foto de perfil: usar profile_image si existe, sino avatar por defecto
+  const profileImage = org.profile_image 
+    ? org.profile_image 
+    : org.role === "hotel"
+      ? "https://ui-avatars.com/api/?name=" + encodeURIComponent(org.name) + "&background=3b82f6&color=white"
+      : "https://ui-avatars.com/api/?name=" + encodeURIComponent(org.name) + "&background=10b981&color=white";
+
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
-      <h1>Bienvenido a Hotel Media Bank</h1>
-      <h2>{org.name}</h2>
-      <p><strong>Rol:</strong> {org.role === "hotel" ? "🏨 Hotel" : "💼 Agencia de viajes"}</p>
-      <p><strong>Dirección:</strong> {org.address}</p>
-      <p><strong>Ubicación:</strong> {org.city}, {org.province}, {org.country}</p>
-      <p><strong>Teléfono:</strong> {org.phone}</p>
-      
-      {org.website && (
-        <p><strong>Web:</strong> <a href={org.website} target="_blank" rel="noreferrer">{org.website}</a></p>
-      )}
-      
-      {org.role === "hotel" && (
-        <>
-          <p><strong>Estrellas:</strong> {"⭐".repeat(org.stars || 0)}</p>
-          <p><strong>Tipo:</strong> {HOTEL_TYPE_LABELS[org.hotel_type || ""] || org.hotel_type}</p>
-        </>
-      )}
-
-      {/* --- Sección de Galería --- */}
-      <div style={{ marginTop: "2rem", padding: "1.5rem", backgroundColor: "#f8fafc", borderRadius: "8px" }}>
-        <h3>
-          {org.role === "hotel" 
-            ? "🖼️ Tu galería de medios"
-            : "🏨 Galería de hoteles"}
-        </h3>
-
-        {/* Para hoteles */}
-        {org.role === "hotel" && (
-          <>
-            {media.length === 0 ? (
-              <p>No hay imágenes ni videos aún.</p>
+    <div style={{
+      minHeight: "100vh",
+      backgroundColor: "#f8fafc",
+      padding: "2rem 1rem"
+    }}>
+      {/* Header con iconos */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "2rem",
+        padding: "0 1rem"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          {/* Foto del hotel/agencia */}
+          <div style={{
+            width: "120px",
+            height: "120px",
+            borderRadius: "50%",
+            overflow: "hidden",
+            border: "3px solid white",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
+          }}>
+            {org.role === "hotel" && media.length > 0 && media[0].type === "video" ? (
+              <div style={{
+                width: "100%",
+                height: "100%",
+                background: "#000",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                fontSize: "2rem"
+              }}>
+                🎥
+              </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
-                {media.map((item) => (
-                  <div key={item.id} style={{ position: "relative", borderRadius: "4px", overflow: "hidden" }}>
+              <img
+                src={profileImage}
+                alt={org.name}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            )}
+          </div>
+
+          {/* Nombre */}
+          <h1 style={{ 
+            fontSize: "1.75rem", 
+            fontWeight: "700",
+            color: "#1e293b",
+            margin: 0
+          }}>
+            {org.name}
+          </h1>
+        </div>
+
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          {/* Icono de invitación */}
+          <button
+            onClick={() => {
+              if (org.role === "hotel") {
+                window.location.href = "/hotel-requests";
+              } else {
+                window.location.href = "/agency-requests";
+              }
+            }}
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              backgroundColor: "#3b82f6",
+              color: "white",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              fontSize: "1.2rem"
+            }}
+            title="Gestionar invitaciones"
+          >
+            📩
+          </button>
+
+          {/* ✅ CAMBIADO: Botón directo a perfil (sin menú desplegable) */}
+          <button
+            onClick={() => window.location.href = "/profile"}
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              backgroundColor: "#10b981",
+              color: "white",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              fontSize: "1.2rem"
+            }}
+            title="Mi perfil"
+          >
+            👤
+          </button>
+                    {/* ✅  Botón cerrar sesión */}
+          <button
+            onClick={handleLogout}
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              backgroundColor: "#ef4444",
+              color: "white",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              fontSize: "1.2rem"
+            }}
+            title="Cerrar sesión"
+          >
+            🚪
+          </button>
+        </div>
+        
+      </div>
+
+      {/* Galería (solo si es hotel) */}
+      {org.role === "hotel" && (
+        <div style={{
+          maxWidth: "800px",
+          margin: "0 auto",
+          backgroundColor: "white",
+          borderRadius: "20px",
+          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+          overflow: "hidden"
+        }}>
+          <div style={{ padding: "2rem" }}>
+            <h3 style={{ 
+              fontSize: "1.25rem", 
+              fontWeight: "600", 
+              color: "#1e293b",
+              marginBottom: "1.5rem"
+            }}>
+              🖼️ Galería
+            </h3>
+
+            {media.length === 0 ? (
+              <div style={{ 
+                textAlign: "center", 
+                padding: "2rem",
+                backgroundColor: "#f8fafc",
+                borderRadius: "12px",
+                border: "1px dashed #cbd5e1"
+              }}>
+                <p style={{ color: "#64748b", fontSize: "0.95rem" }}>
+                  No hay imágenes ni videos aún.
+                </p>
+              </div>
+            ) : (
+              <div style={{ 
+                display: "grid", 
+                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", 
+                gap: "1.25rem"
+              }}>
+                {media.map((item, index) => (
+                  <div key={index} style={{ 
+                    borderRadius: "12px", 
+                    overflow: "hidden",
+                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                    transition: "transform 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
+                  >
                     {item.type === "video" ? (
                       <div
                         style={{
@@ -176,8 +325,13 @@ export default function Dashboard() {
                     ) : (
                       <img
                         src={item.url}
-                        alt={`Media ${item.id}`}
-                        style={{ width: "100%", height: "150px", objectFit: "cover" }}
+                        alt={`Media ${index}`}
+                        style={{ 
+                          width: "100%", 
+                          height: "150px", 
+                          objectFit: "cover",
+                          display: "block"
+                        }}
                       />
                     )}
                   </div>
@@ -185,70 +339,138 @@ export default function Dashboard() {
               </div>
             )}
 
-            <p style={{ marginTop: "1rem", textAlign: "center" }}>
+            <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
               <a 
-                href="/hotel-media" 
+                href="/Hotel-media" 
                 style={{ 
                   color: "#3b82f6", 
-                  fontWeight: "bold",
-                  textDecoration: "underline"
+                  fontWeight: "600",
+                  textDecoration: "none",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "8px",
+                  transition: "background-color 0.2s ease"
                 }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#eff6ff"}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
               >
-                Subir o gestionar fotos y videos
+                ➕ Subir o gestionar fotos y videos
               </a>
-            </p>
-          </>
-        )}
+            </div>
+          </div>
+        </div>
+      )}
 
-        {/* Para agencias */}
-        {org.role === "agency" && (
-          <>
+      {/* Para agencias: solo mostrar acceso a hoteles */}
+      {org.role === "agency" && (
+        <div style={{
+          maxWidth: "800px",
+          margin: "0 auto",
+          backgroundColor: "white",
+          borderRadius: "20px",
+          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+          overflow: "hidden"
+        }}>
+          <div style={{ padding: "2rem" }}>
+            <h3 style={{ 
+              fontSize: "1.25rem", 
+              fontWeight: "600", 
+              color: "#1e293b",
+              marginBottom: "1.5rem"
+            }}>
+              🏨 Galería de hoteles
+            </h3>
+
             {approvedHotels.length === 0 ? (
-              <p>No tienes acceso a ninguna galería aún. <a href="/agency-requests">Solicita acceso</a>.</p>
-            ) : (
-              <>
-                <ul style={{ listStyle: "none", padding: 0, marginBottom: "1rem" }}>
-                  {approvedHotels.map((hotel) => (
-                    <li
-                      key={hotel.id}
-                      onClick={() => toggleHotelGallery(hotel.id)}
-                      style={{
-                        padding: "8px",
-                        borderBottom: "1px solid #eee",
-                        cursor: "pointer",
-                        fontWeight: expandedHotelId === hotel.id ? "bold" : "normal",
-                        color: expandedHotelId === hotel.id ? "#10b981" : "inherit",
-                      }}
-                    >
-                      {hotel.name}{" "}
-                      <span>
-                        {expandedHotelId === hotel.id ? "▼" : "►"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* ✅ Enlace SIEMPRE visible cuando hay hoteles aprobados */}
-                <p style={{ marginTop: "1rem", textAlign: "center" }}>
-                  <a 
-                    href="/agency-requests" 
-                    style={{ 
-                      color: "#3b82f6", 
-                      fontWeight: "bold",
-                      textDecoration: "underline"
-                    }}
-                  >
-                    Solicitar acceso a más hoteles
-                  </a>
+              <div style={{ 
+                textAlign: "center", 
+                padding: "2rem",
+                backgroundColor: "#f8fafc",
+                borderRadius: "12px",
+                border: "1px dashed #cbd5e1"
+              }}>
+                <p style={{ color: "#64748b", fontSize: "0.95rem", marginBottom: "0.5rem" }}>
+                  No tienes acceso a ninguna galería aún.
                 </p>
+                <a 
+                  href="/agency-requests" 
+                  style={{ 
+                    color: "#3b82f6", 
+                    fontWeight: "600",
+                    textDecoration: "none"
+                  }}
+                >
+                  Solicita acceso
+                </a>
+              </div>
+            ) : (
+              <div style={{ 
+                backgroundColor: "#f8fafc", 
+                borderRadius: "12px", 
+                padding: "1rem",
+                marginBottom: "1.5rem"
+              }}>
+                {approvedHotels.map((hotel) => (
+                  <div
+                    key={hotel.id}
+                    onClick={() => toggleHotelGallery(hotel.id)}
+                    style={{
+                      padding: "0.75rem 1rem",
+                      borderBottom: "1px solid #e2e8f0",
+                      cursor: "pointer",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      transition: "background-color 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f1f5f9"}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                  >
+                    <span>{hotel.name}</span>
+                    <span>{expandedHotelId === hotel.id ? "▼" : "►"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
-                {/* Galería expandida (solo si hay hotel seleccionado) */}
-                {expandedHotelId && media.length > 0 && (
-                  <div style={{ marginTop: "1.5rem", paddingTop: "1rem", borderTop: "1px solid #ddd" }}>
-                    <h4>Galería de {approvedHotels.find(h => h.id === expandedHotelId)?.name}</h4>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
-                      {media.map((item) => (
-                        <div key={item.id} style={{ position: "relative", borderRadius: "4px", overflow: "hidden" }}>
+            {/* ✅ AÑADIDO: Mostrar galería del hotel expandido */}
+            {expandedHotelId && (
+              <div style={{ 
+                marginTop: "1.5rem", 
+                paddingTop: "1.5rem", 
+                borderTop: "2px solid #e2e8f0"
+              }}>
+                {media.length === 0 ? (
+                  <div style={{ 
+                    textAlign: "center",
+                    padding: "2rem",
+                    backgroundColor: "#f8fafc",
+                    borderRadius: "12px"
+                  }}>
+                    <p style={{ color: "#64748b" }}>
+                      No hay medios para este hotel aún.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <h4 style={{ 
+                      fontSize: "1.125rem", 
+                      fontWeight: "600", 
+                      color: "#1e293b",
+                      marginBottom: "1rem"
+                    }}>
+                      Galería de {approvedHotels.find(h => h.id === expandedHotelId)?.name}
+                    </h4>
+                    <div style={{ 
+                      display: "grid", 
+                      gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", 
+                      gap: "1.25rem"
+                    }}>
+                      {media.map((item, index) => (
+                        <div key={index} style={{ 
+                          borderRadius: "12px", 
+                          overflow: "hidden",
+                          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)"
+                        }}>
                           {item.type === "video" ? (
                             <div
                               style={{
@@ -267,45 +489,25 @@ export default function Dashboard() {
                           ) : (
                             <img
                               src={item.url}
-                              alt={`Media ${item.id}`}
-                              style={{ width: "100%", height: "150px", objectFit: "cover" }}
+                              alt={`Media ${index}`}
+                              style={{ 
+                                width: "100%", 
+                                height: "150px", 
+                                objectFit: "cover",
+                                display: "block"
+                              }}
                             />
                           )}
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </>
                 )}
-
-                {expandedHotelId && media.length === 0 && (
-                  <p style={{ marginTop: "1.5rem", paddingTop: "1rem", borderTop: "1px solid #ddd" }}>
-                    No hay medios para este hotel aún.
-                  </p>
-                )}
-              </>
+              </div>
             )}
-          </>
-        )}
-      </div>
-
-      {/* Enlaces adicionales */}
-      <div style={{ marginTop: "2rem" }}>
-        <a href="/setup-organization" style={{ marginRight: "1rem" }}>Editar organización</a>
-        
-        {org.role === "hotel" && (
-          <a href="/hotel-requests" style={{ marginRight: "1rem" }}>Gestionar solicitudes</a>
-        )}
-        
-        <button 
-          onClick={async () => {
-            await supabase.auth.signOut();
-            window.location.href = "/login";
-          }}
-          style={{ padding: "6px 12px", backgroundColor: "#ef4444", color: "white", border: "none", borderRadius: "4px" }}
-        >
-          Cerrar sesión
-        </button>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

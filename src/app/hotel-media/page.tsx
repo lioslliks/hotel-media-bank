@@ -1,15 +1,122 @@
+// src/app/hotel-media/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
 
+interface MediaItem {
+  id: string;
+  url: string;
+  type: string;
+  tags?: string[];
+  quality_score?: number;
+}
+
+const ConfirmModal = ({ 
+  isOpen, 
+  onConfirm, 
+  onCancel,
+  title = "¿Estás seguro?",
+  message = "Esta acción no se puede deshacer."
+}: {
+  isOpen: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+  title?: string;
+  message?: string;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(0,0,0,0.5)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1000,
+      }}
+    >
+      <div 
+        style={{
+          backgroundColor: "white",
+          borderRadius: "16px",
+          padding: "2rem",
+          maxWidth: "400px",
+          width: "90%",
+          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <h3 style={{ 
+          fontSize: "1.25rem", 
+          fontWeight: "600", 
+          color: "#1e293b",
+          marginBottom: "1rem"
+        }}>
+          {title}
+        </h3>
+        <p style={{ 
+          color: "#64748b", 
+          marginBottom: "1.5rem",
+          fontSize: "0.95rem"
+        }}>
+          {message}
+        </p>
+        <div style={{ display: "flex", gap: "1rem" }}>
+          <button
+            onClick={onCancel}
+            style={{
+              flex: 1,
+              padding: "0.75rem",
+              border: "1px solid #cbd5e1",
+              borderRadius: "8px",
+              backgroundColor: "white",
+              color: "#475569",
+              fontWeight: "600",
+              cursor: "pointer",
+              transition: "background-color 0.2s ease"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f8fafc"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "white"}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{
+              flex: 1,
+              padding: "0.75rem",
+              backgroundColor: "#ef4444",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontWeight: "600",
+              cursor: "pointer",
+              transition: "background-color 0.2s ease"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#dc2626"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#ef4444"}
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function HotelMedia() {
-  const [images, setImages] = useState<{ url: string; type: string; id: string }[]>([]);
+  const [images, setImages] = useState<MediaItem[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState<{ id: string; isOpen: boolean }>({ id: "", isOpen: false });
 
-  // Verificar que es un hotel y cargar imágenes
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -32,10 +139,9 @@ export default function HotelMedia() {
           return;
         }
 
-        // Cargar imágenes/videos
         const mediaResponse = await supabase
           .from("media")
-          .select("id, url, type")
+          .select("id, url, type, tags, quality_score")
           .eq("hotel_id", orgResponse.data.id)
           .order("created_at", { ascending: false });
 
@@ -71,7 +177,13 @@ export default function HotelMedia() {
         throw new Error(data.error || "Subida fallida");
       }
 
-      // Guardar en base de datos
+      // Bloquear subida si calidad es baja
+      if (data.quality_score !== undefined && data.quality_score < 0.4) {
+        setError("⚠️ La imagen tiene baja calidad (poco nítida o oscura). Por favor, sube una foto más clara.");
+        setUploading(false);
+        return;
+      }
+
       const sessionResponse = await supabase.auth.getSession();
       const userId = sessionResponse.data.session?.user.id;
       const orgResponse = await supabase
@@ -85,15 +197,16 @@ export default function HotelMedia() {
       const { error } = await supabase.from("media").insert({
         hotel_id: orgResponse.data.id,
         url: data.url,
-        type: data.type, // 'image' o 'video'
+        type: data.type,
+        tags: [],
+        quality_score: data.quality_score || 0,
       });
 
       if (error) throw error;
 
-      // Recargar galería
       const mediaResponse = await supabase
         .from("media")
-        .select("id, url, type")
+        .select("id, url, type, tags, quality_score")
         .eq("hotel_id", orgResponse.data.id)
         .order("created_at", { ascending: false });
 
@@ -106,22 +219,28 @@ export default function HotelMedia() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de eliminar esta imagen/video?")) return;
+  const handleDelete = (id: string) => {
+    setShowDeleteModal({ id, isOpen: true });
+  };
 
-    const { error } = await supabase.from("media").delete().eq("id", id);
+  const confirmDelete = async () => {
+    const { error } = await supabase.from("media").delete().eq("id", showDeleteModal.id);
     if (error) {
-      alert("Error al eliminar: " + error.message);
+      setError("Error al eliminar: " + error.message);
     } else {
-      setImages(prev => prev.filter(img => img.id !== id));
+      setImages(prev => prev.filter(img => img.id !== showDeleteModal.id));
     }
+    setShowDeleteModal({ id: "", isOpen: false });
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal({ id: "", isOpen: false });
   };
 
   return (
     <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
       <h1>Galería de Medios</h1>
 
-      {/* Subida */}
       <form onSubmit={handleUpload} style={{ marginBottom: "2rem" }}>
         <input
           type="file"
@@ -148,7 +267,6 @@ export default function HotelMedia() {
 
       {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
 
-      {/* Galería */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
         {images.length === 0 ? (
           <p>No hay imágenes ni videos aún. Sube uno para empezar.</p>
@@ -202,6 +320,14 @@ export default function HotelMedia() {
           ))
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteModal.isOpen}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        title="¿Estás seguro?"
+        message="El contenido se eliminará permanentemente."
+      />
     </div>
   );
 }
