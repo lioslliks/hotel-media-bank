@@ -1,16 +1,14 @@
-// src/lib/supabaseClient.ts
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+// ✅ Añade esta verificación
+console.log("Supabase URL:", supabaseUrl);
+console.log("Supabase Key:", supabaseAnonKey);
+
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Faltan variables de entorno de Supabase');
+  throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    flowType: "pkce", // 👈 Esto es clave para Next.js App Router
-    detectSessionInUrl: true,
-  },
-});
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);

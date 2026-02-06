@@ -1,108 +1,228 @@
 // src/app/hotel-media/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import { useNotifications } from "../../hooks/useNotifications";
+import Gallery from "@/components/Gallery"; 
 
-interface MediaItem {
+interface Organization {
   id: string;
-  url: string;
-  type: string;
-  tags?: string[];
-  quality_score?: number;
+  name: string;
+  role: string;
+  address: string;
+  phone: string;
+  country: string;
+  province: string;
+  city: string;
+  website: string | null;
+  stars: number | null;
+  hotel_type: string | null;
+  profile_image: string | null;
 }
 
-const ConfirmModal = ({ 
-  isOpen, 
-  onConfirm, 
-  onCancel,
-  title = "¿Estás seguro?",
-  message = "Esta acción no se puede deshacer."
+// Componente NotificationsDropdown - VERSIÓN COMPLETA SIN CHECK
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  date: string;
+  read?: boolean;
+}
+
+interface NotificationsDropdownProps {
+  notifications: Notification[];
+  unreadCount: number;
+  loading: boolean;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+  deleteNotification: (id: string) => void;
+}
+
+const NotificationsDropdown = ({ 
+  notifications, 
+  unreadCount, 
+  loading, 
+  markAsRead, 
+  markAllAsRead, 
+  deleteNotification 
+}: NotificationsDropdownProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.notifications-dropdown')) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="notifications-dropdown relative">
+      {/* Botón campana con efecto hover */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-2 text-gray-600 hover:text-blue-600 transition-all hover:-translate-y-0.5"
+      >
+        {/* Bell Icon */}
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M14.857 17.657A2 2 0 0113 19H11a2 2 0 01-1.857-1.343M6 8a6 6 0 1112 0c0 3.5 1.5 5 2 5.5H4c.5-.5 2-2 2-5.5z"
+          />
+        </svg>
+
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-semibold w-5 h-5 rounded-full flex items-center justify-center shadow">
+            {unreadCount}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 animate-fade-in-down">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+            <h3 className="font-semibold text-gray-900">Notificaciones</h3>
+
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                Marcar todo como leído
+              </button>
+            )}
+          </div>
+
+          {/* Loading */}
+          {loading && (
+            <div className="p-6 text-center text-gray-500 text-sm">
+              <div className="w-6 h-6 mx-auto mb-2 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              Cargando notificaciones...
+            </div>
+          )}
+
+          {/* Empty */}
+          {!loading && notifications.length === 0 && (
+            <div className="p-6 text-center text-gray-500 text-sm">
+              <div className="text-5xl mb-3 opacity-30">🔔</div>
+              No hay notificaciones
+            </div>
+          )}
+
+          {/* List - SIN ICONO DE CHECK */}
+          {!loading && notifications.length > 0 && (
+            <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
+              {notifications.map((n) => (
+                <div
+                  key={n.id}
+                  className={`flex items-start gap-3 px-4 py-4 transition-all cursor-pointer ${
+                    !n.read ? "bg-blue-50" : "hover:bg-gray-50"
+                  }`}
+                  onClick={() => !n.read && markAsRead(n.id)}
+                >
+                  {/* Indicador de no leído */}
+                  <div className="pt-1">
+                    {!n.read && (
+                      <span className="block w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
+                    )}
+                  </div>
+
+                  {/* Contenido */}
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {n.title}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">{n.message}</p>
+                    <p className="text-[11px] text-gray-400 mt-1">{n.date}</p>
+                  </div>
+
+                  {/* SOLO BOTÓN DE ELIMINAR */}
+                  <div className="flex items-start">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(n.id);
+                      }}
+                      className="text-gray-400 hover:text-red-600 hover:scale-110 transition-transform"
+                      title="Eliminar"
+                    >
+                      {/* X Icon */}
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const DeletePhotoModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  photoName,
 }: {
   isOpen: boolean;
+  onClose: () => void;
   onConfirm: () => void;
-  onCancel: () => void;
-  title?: string;
-  message?: string;
+  photoName?: string;
 }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        backgroundColor: "rgba(0,0,0,0.5)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 1000,
-      }}
-    >
-      <div 
-        style={{
-          backgroundColor: "white",
-          borderRadius: "16px",
-          padding: "2rem",
-          maxWidth: "400px",
-          width: "90%",
-          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        <h3 style={{ 
-          fontSize: "1.25rem", 
-          fontWeight: "600", 
-          color: "#1e293b",
-          marginBottom: "1rem"
-        }}>
-          {title}
-        </h3>
-        <p style={{ 
-          color: "#64748b", 
-          marginBottom: "1.5rem",
-          fontSize: "0.95rem"
-        }}>
-          {message}
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-200">
+        <h3 className="text-lg font-bold text-gray-900 mb-2">Confirmar eliminación</h3>
+        <p className="text-gray-600 text-sm leading-relaxed mb-4">
+          {photoName
+            ? `¿Estás seguro de que quieres eliminar "${photoName}"?`
+            : "¿Estás seguro de que quieres eliminar esta foto?"}
+          <br />
+          <span className="text-red-600 font-semibold">Esta acción no se puede deshacer.</span>
         </p>
-        <div style={{ display: "flex", gap: "1rem" }}>
+
+        <div className="flex gap-3">
           <button
-            onClick={onCancel}
-            style={{
-              flex: 1,
-              padding: "0.75rem",
-              border: "1px solid #cbd5e1",
-              borderRadius: "8px",
-              backgroundColor: "white",
-              color: "#475569",
-              fontWeight: "600",
-              cursor: "pointer",
-              transition: "background-color 0.2s ease"
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f8fafc"}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "white"}
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
           >
             Cancelar
           </button>
+
           <button
             onClick={onConfirm}
-            style={{
-              flex: 1,
-              padding: "0.75rem",
-              backgroundColor: "#ef4444",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              fontWeight: "600",
-              cursor: "pointer",
-              transition: "background-color 0.2s ease"
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#dc2626"}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#ef4444"}
+            className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 shadow-sm hover:shadow-md"
           >
-            Eliminar
+            Eliminar permanentemente
           </button>
         </div>
       </div>
@@ -110,224 +230,273 @@ const ConfirmModal = ({
   );
 };
 
-export default function HotelMedia() {
-  const [images, setImages] = useState<MediaItem[]>([]);
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
-  const [showDeleteModal, setShowDeleteModal] = useState<{ id: string; isOpen: boolean }>({ id: "", isOpen: false });
+export default function HotelMediaPage() {
+  const [org, setOrg] = useState<Organization | null>(null);
+  const [media, setMedia] = useState<{ url: string; type: string; id: string }[]>([]);
+  const [approvedHotels, setApprovedHotels] = useState<{ id: string; name: string }[]>([]);
+  const [expandedHotelId, setExpandedHotelId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState("gallery");
+  const [totalMedia, setTotalMedia] = useState(0);
+  const [pendingRequests, setPendingRequests] = useState(0);
+  const [connectedAgencies, setConnectedAgencies] = useState(0);
+  const [totalHotels, setTotalHotels] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [photoToDelete, setPhotoToDelete] = useState<{ id: string; name?: string } | null>(null);
+
+  const {
+    notifications,
+    unreadCount,
+    loading: notificationsLoading,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications(userId);
 
   useEffect(() => {
-    const loadUserData = async () => {
+    const loadOrg = async () => {
       try {
-        const sessionResponse = await supabase.auth.getSession();
-        if (!sessionResponse.data.session) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session) {
           window.location.href = "/login";
           return;
         }
 
-        const userId = sessionResponse.data.session.user.id;
-        const orgResponse = await supabase
+        const userId = sessionData.session.user.id;
+        setUserId(userId);
+
+        const { data: orgData } = await supabase
           .from("organizations")
-          .select("id, role")
+          .select("*")
           .eq("created_by", userId)
           .maybeSingle();
 
-        if (!orgResponse.data || orgResponse.data.role !== "hotel") {
-          alert("Solo los hoteles pueden acceder a esta página");
-          window.location.href = "/dashboard";
+        if (!orgData) {
+          window.location.href = "/setup-organization";
           return;
         }
 
-        const mediaResponse = await supabase
-          .from("media")
-          .select("id, url, type, tags, quality_score")
-          .eq("hotel_id", orgResponse.data.id)
-          .order("created_at", { ascending: false });
+        setOrg(orgData as Organization);
 
-        setImages(mediaResponse.data || []);
+        if (orgData.role === "hotel") {
+          const { data: mediaData } = await supabase
+            .from("media")
+            .select("id, url, type")
+            .eq("hotel_id", orgData.id)
+            .order("created_at", { ascending: false });
+
+          setMedia(mediaData || []);
+          setTotalMedia(mediaData?.length || 0);
+
+          const { data: requestsData } = await supabase
+            .from("agency_hotel_access")
+            .select("id")
+            .eq("hotel_id", orgData.id)
+            .eq("status", "pending");
+
+          setPendingRequests(requestsData?.length || 0);
+
+          const { data: connectedData } = await supabase
+            .from("agency_hotel_access")
+            .select("id")
+            .eq("hotel_id", orgData.id)
+            .eq("status", "approved");
+
+          setConnectedAgencies(connectedData?.length || 0);
+        }
+
+        if (orgData.role === "agency") {
+          const { data: accessData } = await supabase
+            .from("agency_hotel_access")
+            .select("hotel_id, status")
+            .eq("agency_id", orgData.id);
+
+          if (accessData && Array.isArray(accessData)) {
+            const approved = accessData.filter((a) => a.status === "approved");
+            const pending = accessData.filter((a) => a.status === "pending");
+
+            setTotalHotels(approved.length);
+            setPendingRequests(pending.length);
+
+            const hotelIds = approved.map((a) => a.hotel_id);
+
+            const { data: hotelsData } = await supabase
+              .from("organizations")
+              .select("id, name")
+              .in("id", hotelIds);
+
+            setApprovedHotels(hotelsData || []);
+          }
+        }
+
+        setLoading(false);
       } catch (err) {
-        console.error("Error loading media:", err);
-        setError("Error al cargar la galería");
+        console.error("Error loading data:", err);
+        setLoading(false);
       }
     };
 
-    loadUserData();
+    loadOrg();
   }, []);
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) return;
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
 
-    setUploading(true);
-    setError("");
+  const handleDeletePhoto = async () => {
+    if (!photoToDelete) return;
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const photo = media.find((m) => m.id === photoToDelete.id);
+      if (!photo) throw new Error("Foto no encontrada");
 
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const fileName = photo.url.split("/").pop();
 
-      const data = await res.json();
+      await supabase.storage.from("media").remove([fileName!]);
+      await supabase.from("media").delete().eq("id", photoToDelete.id);
 
-      if (!res.ok) {
-        throw new Error(data.error || "Subida fallida");
-      }
+      setMedia((prev) => prev.filter((p) => p.id !== photoToDelete.id));
+      setTotalMedia((prev) => prev - 1);
 
-      // Bloquear subida si calidad es baja
-      if (data.quality_score !== undefined && data.quality_score < 0.4) {
-        setError("⚠️ La imagen tiene baja calidad (poco nítida o oscura). Por favor, sube una foto más clara.");
-        setUploading(false);
-        return;
-      }
-
-      const sessionResponse = await supabase.auth.getSession();
-      const userId = sessionResponse.data.session?.user.id;
-      const orgResponse = await supabase
-        .from("organizations")
-        .select("id")
-        .eq("created_by", userId)
-        .maybeSingle();
-
-      if (!orgResponse.data) throw new Error("Hotel no encontrado");
-
-      const { error } = await supabase.from("media").insert({
-        hotel_id: orgResponse.data.id,
-        url: data.url,
-        type: data.type,
-        tags: [],
-        quality_score: data.quality_score || 0,
-      });
-
-      if (error) throw error;
-
-      const mediaResponse = await supabase
-        .from("media")
-        .select("id, url, type, tags, quality_score")
-        .eq("hotel_id", orgResponse.data.id)
-        .order("created_at", { ascending: false });
-
-      setImages(mediaResponse.data || []);
-      setFile(null);
+      setShowDeleteModal(false);
+      setPhotoToDelete(null);
     } catch (err) {
-      setError("Error: " + (err as Error).message);
-    } finally {
-      setUploading(false);
+      console.error("Error al eliminar foto:", err);
     }
   };
 
-  const handleDelete = (id: string) => {
-    setShowDeleteModal({ id, isOpen: true });
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-white">
+        <div className="p-8 bg-white rounded-xl shadow-sm text-center">
+          <div className="w-8 h-8 mx-auto mb-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-600 text-base">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const confirmDelete = async () => {
-    const { error } = await supabase.from("media").delete().eq("id", showDeleteModal.id);
-    if (error) {
-      setError("Error al eliminar: " + error.message);
-    } else {
-      setImages(prev => prev.filter(img => img.id !== showDeleteModal.id));
-    }
-    setShowDeleteModal({ id: "", isOpen: false });
-  };
-
-  const cancelDelete = () => {
-    setShowDeleteModal({ id: "", isOpen: false });
-  };
+  if (!org) return null;
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
-      <h1>Galería de Medios</h1>
+    <div className="min-h-screen flex bg-gray-50 font-sans">
 
-      <form onSubmit={handleUpload} style={{ marginBottom: "2rem" }}>
-        <input
-          type="file"
-          accept="image/*,video/*"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          required
-          style={{ width: "100%", padding: "8px", margin: "8px 0" }}
-        />
-        <button
-          type="submit"
-          disabled={uploading}
-          style={{
-            padding: "8px 16px",
-            backgroundColor: "#3b82f6",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            marginTop: "8px",
-          }}
-        >
-          {uploading ? "Subiendo..." : "Subir imagen o video"}
-        </button>
-      </form>
+      {/* SIDEBAR LIMPIO */}
+      <aside className="w-72 bg-gradient-to-b from-blue-800 to-blue-900 text-white p-6 fixed left-0 top-0 h-screen flex flex-col">
 
-      {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
+        {/* Título */}
+        <div className="flex items-center mb-8 pb-3 border-b border-white/10">
+          <h1 className="text-xl font-bold tracking-tight">Hotel Media Bank</h1>
+        </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
-        {images.length === 0 ? (
-          <p>No hay imágenes ni videos aún. Sube uno para empezar.</p>
-        ) : (
-          images.map((item) => (
-            <div key={item.id} style={{ position: "relative", borderRadius: "4px", overflow: "hidden" }}>
-              {item.type === "video" ? (
-                <div
-                  style={{
-                    width: "100%",
-                    height: "150px",
-                    background: "#000",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "white",
-                    fontSize: "1.2rem",
-                  }}
-                >
-                  🎥 Video
-                </div>
-              ) : (
-                <img
-                  src={item.url}
-                  alt={`Media ${item.id}`}
-                  style={{ width: "100%", height: "150px", objectFit: "cover" }}
-                />
-              )}
-              <button
-                onClick={() => handleDelete(item.id)}
-                style={{
-                  position: "absolute",
-                  top: "8px",
-                  right: "8px",
-                  background: "rgba(0,0,0,0.6)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "50%",
-                  width: "24px",
-                  height: "24px",
-                  fontSize: "12px",
-                  cursor: "pointer",
-                }}
-              >
-                ×
-              </button>
-              <div style={{ marginTop: "4px", fontSize: "0.85rem", textAlign: "center" }}>
-                {item.type === "video" ? "Video" : "Imagen"}
+        {/* Volver */}
+        <nav className="flex-1 flex flex-col gap-2">
+          <div
+            onClick={() => (window.location.href = "/dashboard")}
+            className="px-4 py-3.5 rounded-lg cursor-pointer font-medium text-sm transition-all text-white/80 hover:bg-white/10 flex items-center gap-2"
+          >
+            <span className="text-lg">←</span>
+            <span>Volver al Dashboard</span>
+          </div>
+        </nav>
+
+        {/* Logout */}
+        <div className="mt-auto pt-5 border-t border-white/10">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 py-0.5 text-blue-200/90 hover:text-white transition-colors text-sm font-medium"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Cerrar Sesión
+          </button>
+        </div>
+
+      </aside>
+      {/* MAIN CONTENT */}
+      <main className="flex-1 ml-72 bg-gray-50 p-8 overflow-y-auto">
+
+        {/* TOP BAR */}
+        <div className="fixed top-0 left-72 right-0 h-16 bg-white shadow-sm flex items-center justify-between px-8 z-40">
+          <span className="text-sm text-gray-500 uppercase font-semibold">
+            {activeSection === "gallery" ? "Dashboard" : activeSection}
+          </span>
+
+          <NotificationsDropdown
+            notifications={notifications}
+            unreadCount={unreadCount}
+            loading={notificationsLoading}
+            markAsRead={markAsRead}
+            markAllAsRead={markAllAsRead}
+            deleteNotification={deleteNotification}
+          />
+        </div>
+
+        {/* CONTENT */}
+        <div className="pt-24">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              {org.role === "hotel" ? "Mi Galería" : "Hoteles Disponibles"}
+            </h2>
+            <p className="text-gray-600 text-base">
+              {org.role === "hotel"
+                ? "Gestiona y comparte tu contenido multimedia con agencias autorizadas"
+                : "Accede al contenido multimedia de tus hoteles asociados"}
+            </p>
+          </div>
+
+          {/* GALERÍA DEL HOTEL */}
+          {org.role === "hotel" && (
+            <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+              <div className="p-8">
+                <Gallery key={media.length} />
               </div>
             </div>
-          ))
-        )}
-      </div>
+          )}
 
-      <ConfirmModal
-        isOpen={showDeleteModal.isOpen}
-        onConfirm={confirmDelete}
-        onCancel={cancelDelete}
-        title="¿Estás seguro?"
-        message="El contenido se eliminará permanentemente."
-      />
+          {/* GALERÍAS PARA AGENCIAS */}
+          {org.role === "agency" && (
+            <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+              <div className="p-8">
+                {/* Aquí va tu código de agencias */}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* MODAL DE ELIMINACIÓN */}
+        <DeletePhotoModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setPhotoToDelete(null);
+          }}
+          onConfirm={handleDeletePhoto}
+          photoName={photoToDelete?.name}
+        />
+      </main>
+
+      {/* Estilos globales para animaciones */}
+      <style jsx global>{`
+        @keyframes fade-in-down {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in-down {
+          animation: fade-in-down 0.2s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

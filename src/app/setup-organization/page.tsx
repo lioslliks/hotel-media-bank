@@ -1,32 +1,31 @@
 // src/app/setup-organization/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import { COUNTRIES, useLocations } from '../../hooks/useLocations';
 
-// 🌍 Datos estructurados: País → Provincia → Ciudades
-const LOCATIONS: Record<string, Record<string, string[]>> = {
-  "España": {
-    "Madrid": ["Madrid", "Alcalá de Henares", "Getafe", "Móstoles", "Fuenlabrada"],
-    "Barcelona": ["Barcelona", "Sitges", "Tarragona", "Lloret de Mar", "Girona"],
-    "Valencia": ["Valencia", "Benidorm", "Alicante", "Torrevieja", "Elche"],
-    "Sevilla": ["Sevilla", "Cádiz", "Jerez de la Frontera", "Huelva"],
-    "Málaga": ["Málaga", "Marbella", "Fuengirola", "Estepona", "Nerja"]
-  },
-  "México": {
-    "Ciudad de México": ["CDMX", "Coyoacán", "Polanco", "Santa Fe"],
-    "Jalisco": ["Guadalajara", "Puerto Vallarta", "Tlaquepaque", "Zapopan"],
-    "Nuevo León": ["Monterrey", "San Pedro Garza García", "Apodaca"]
-  },
-  "Argentina": {
-    "Buenos Aires": ["Buenos Aires", "La Plata", "Tigre", "Mar del Plata"],
-    "Córdoba": ["Córdoba", "Villa Carlos Paz", "Alta Gracia", "Río Cuarto"]
-  },
-  "Colombia": {
-    "Bogotá": ["Bogotá", "Chía", "Zipaquirá"],
-    "Antioquia": ["Medellín", "Envigado", "Rionegro"]
-  }
-};
+const HOTEL_TYPES = [
+  { value: "adults_only", label: "Solo adultos" },
+  { value: "family", label: "Familiar" },
+  { value: "boutique", label: "Boutique" },
+  { value: "luxury", label: "Lujo" },
+  { value: "golf", label: "Golf" },
+  { value: "sun_and_beach", label: "Sol y playa" },
+  { value: "wellness", label: "Wellness/Spa" },
+  { value: "urban", label: "Urbano" },
+  { value: "budget", label: "Económico" },
+  { value: "aparthotel", label: "Apartahotel" },
+];
+
+// Categorías hoteleras profesionales (sistema B2B estándar)
+const STAR_CATEGORIES = [
+  { value: 1, label: "1★ Económico" },
+  { value: 2, label: "2★ Estándar" },
+  { value: 3, label: "3★ Confort" },
+  { value: 4, label: "4★ Superior" },
+  { value: 5, label: "5★ Lujo" },
+];
 
 export default function SetupOrganization() {
   const [role, setRole] = useState<"hotel" | "agency">("hotel");
@@ -34,20 +33,33 @@ export default function SetupOrganization() {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
-  const [country, setCountry] = useState(Object.keys(LOCATIONS)[0]);
-  const [province, setProvince] = useState("");
-  const [city, setCity] = useState("");
   const [website, setWebsite] = useState("");
   const [stars, setStars] = useState(3);
-  const [hotelType, setHotelType] = useState("family");
-  const [orgId, setOrgId] = useState<string | null>(null); // 👈 NUEVO: guardar ID
+  const [hotelTypes, setHotelTypes] = useState<string[]>(["family"]);
+  const [hotelTypeError, setHotelTypeError] = useState("");
+  const [orgId, setOrgId] = useState<string | null>(null);
   
-  // 👇 NUEVO: Estados para foto de perfil
+  // Estados para foto de perfil - AHORA OBLIGATORIA
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // 👇 NUEVA: función de validación
+  // Hook de ubicaciones
+  const { 
+    selectedCountry,
+    selectedProvince, 
+    availableProvinces,
+    availableCities, 
+    handleCountryChange,
+    handleProvinceChange,
+    getCurrentCountry,
+    getCurrentProvince,
+    getCurrentCity
+  } = useLocations();
+
+  // Validación de teléfono
   const validatePhone = (phone: string): boolean => {
     const digitsOnly = phone.replace(/\D/g, '');
     if (digitsOnly.length < 7 || digitsOnly.length > 15) {
@@ -57,16 +69,33 @@ export default function SetupOrganization() {
     return phoneRegex.test(phone);
   };
 
-  // 👇 NUEVA: Manejar cambio de imagen de perfil
+  // Manejar cambio de imagen de perfil
   const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validar tipo de archivo
+      if (!file.type.startsWith('image/')) {
+        setImageError("Por favor, selecciona una imagen válida (JPG, PNG, GIF)");
+        setProfileImageFile(null);
+        setProfileImagePreview(null);
+        return;
+      }
+
+      // Validar tamaño (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setImageError("La imagen es demasiado grande. Máximo 5MB");
+        setProfileImageFile(null);
+        setProfileImagePreview(null);
+        return;
+      }
+
       setProfileImageFile(file);
       setProfileImagePreview(URL.createObjectURL(file));
+      setImageError("");
     }
   };
 
-  // 👇 NUEVA: Subir imagen de perfil
+  // Subir imagen de perfil
   const uploadProfileImage = async (orgId: string) => {
     if (!profileImageFile) return null;
     
@@ -84,7 +113,7 @@ export default function SetupOrganization() {
     return data.publicUrl;
   };
 
-  // 👇 NUEVA: Cargar imagen de perfil existente
+  // Cargar imagen de perfil existente
   const loadProfileImage = async (orgId: string) => {
     try {
       const { data } = supabase.storage
@@ -99,24 +128,6 @@ export default function SetupOrganization() {
       console.log("No se encontró imagen de perfil");
     }
   };
-
-  // Actualizar provincias cuando cambia el país
-  useEffect(() => {
-    const provinces = Object.keys(LOCATIONS[country] || {});
-    if (provinces.length > 0) {
-      setProvince(prev => prev || provinces[0]);
-      const cities = LOCATIONS[country][provinces[0]] || [];
-      setCity(prev => prev || cities[0] || "");
-    }
-  }, [country]);
-
-  // Actualizar ciudades cuando cambia la provincia
-  useEffect(() => {
-    const cities = LOCATIONS[country]?.[province] || [];
-    if (cities.length > 0) {
-      setCity(prev => prev || cities[0]);
-    }
-  }, [province]);
 
   // Cargar datos existentes al entrar
   useEffect(() => {
@@ -138,22 +149,40 @@ export default function SetupOrganization() {
       if (orgResponse.data) {
         // Ya tiene organización → cargarla
         const org = orgResponse.data;
-        setOrgId(org.id); // 👈 Guardar ID existente
+        setOrgId(org.id);
         setName(org.name);
         setRole(org.role as "hotel" | "agency");
         setAddress(org.address);
         setPhone(org.phone);
-        setCountry(org.country);
-        setProvince(org.province);
-        setCity(org.city);
+        
+        // Inicializar ubicaciones con los datos existentes
+        if (org.country) {
+          handleCountryChange(org.country);
+        }
+        if (org.province) {
+          handleProvinceChange(org.province);
+        }
+        
         setWebsite(org.website || "");
         
         if (org.role === "hotel") {
           setStars(org.stars || 3);
-          setHotelType(org.hotel_type || "family");
+          // Convertir string/array desde DB a array
+          if (org.hotel_type) {
+            try {
+              const parsed = JSON.parse(org.hotel_type);
+              if (Array.isArray(parsed)) {
+                setHotelTypes(parsed);
+              } else {
+                setHotelTypes([org.hotel_type]);
+              }
+            } catch {
+              setHotelTypes([org.hotel_type]);
+            }
+          }
         }
         
-        // 👇 Cargar imagen de perfil si existe
+        // Cargar imagen de perfil si existe
         if (org.profile_image) {
           setProfileImageUrl(org.profile_image);
           setProfileImagePreview(org.profile_image);
@@ -161,24 +190,49 @@ export default function SetupOrganization() {
           loadProfileImage(org.id);
         }
       } else {
-        // Nuevo usuario: usar rol guardado de la página principal
+        // Nuevo usuario: usar rol guardado
         const savedRole = sessionStorage.getItem("userRole") || 
                           localStorage.getItem("userRole");
         if (savedRole && (savedRole === "hotel" || savedRole === "agency")) {
           setRole(savedRole as "hotel" | "agency");
         }
-        setCountry(Object.keys(LOCATIONS)[0]);
+        // Inicializar con primer país
+        handleCountryChange(COUNTRIES[0].value);
       }
+      
+      setLoading(false);
     };
 
     loadUserData();
   }, []);
 
+  const toggleHotelType = (value: string) => {
+    setHotelTypes(prev => 
+      prev.includes(value) 
+        ? prev.filter(type => type !== value) 
+        : [...prev, value]
+    );
+    setHotelTypeError("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validar teléfono
     if (!validatePhone(phone)) {
       setPhoneError("Por favor, introduce un número de teléfono válido");
+      return;
+    }
+
+    // Validar imagen de perfil - AHORA OBLIGATORIA
+    if (!profileImageFile && !profileImageUrl) {
+      setImageError("Por favor, sube una foto de perfil");
+      return;
+    }
+
+    // Validar tipos de hotel (al menos uno)
+    if (role === "hotel" && hotelTypes.length === 0) {
+      setHotelTypeError("Selecciona al menos un tipo de establecimiento");
       return;
     }
 
@@ -187,19 +241,19 @@ export default function SetupOrganization() {
 
     const userId = sessionResponse.data.session.user.id;
 
-    // 👇 Construir objeto de actualización solo con campos necesarios
+    // Construir objeto de actualización
     const updateData: any = {
       name,
       role,
       address,
       phone,
-      country,
-      province,
-      city,
+      country: selectedCountry,
+      province: selectedProvince,
+      city: getCurrentCity(""),
       website,
     };
 
-    // 👇 Subir imagen de perfil si hay una nueva
+    // Subir imagen de perfil (obligatoria)
     let imageUrl = profileImageUrl;
     if (profileImageFile) {
       try {
@@ -211,30 +265,25 @@ export default function SetupOrganization() {
       }
     }
 
-    // 👇 Incluir URL de imagen si existe
-    if (imageUrl) {
-      updateData.profile_image = imageUrl;
-    }
+    // Incluir URL de imagen (obligatoria)
+    updateData.profile_image = imageUrl;
 
     // Solo incluir campos de hotel si es hotel
     if (role === "hotel") {
       updateData.stars = stars;
-      updateData.hotel_type = hotelType;
+      updateData.hotel_type = JSON.stringify(hotelTypes);
     } else {
-      // Si cambia a agencia, limpiar campos de hotel
       updateData.stars = null;
       updateData.hotel_type = null;
     }
 
     let response;
     if (orgId) {
-      // 👉 ACTUALIZAR organización existente (no eliminar)
       response = await supabase
         .from("organizations")
         .update(updateData)
         .eq("id", orgId);
     } else {
-      // 👉 CREAR nueva organización
       response = await supabase
         .from("organizations")
         .insert({
@@ -250,151 +299,295 @@ export default function SetupOrganization() {
     }
   };
 
-  const countries = Object.keys(LOCATIONS);
-  const provincesList = LOCATIONS[country] ? Object.keys(LOCATIONS[country]) : [];
-  const citiesList = LOCATIONS[country]?.[province] || [];
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <div className="p-8 bg-white rounded-xl shadow-sm text-center">
+          <div className="w-8 h-8 mx-auto mb-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-600 text-base">Cargando configuración...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "600px", margin: "0 auto" }}>
-      <h1>Configurar tu organización</h1>
-      <form onSubmit={handleSubmit}>
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value as "hotel" | "agency")}
-          style={{ width: "100%", padding: "8px", margin: "8px 0" }}
-        >
-          <option value="hotel">🏨 Hotel</option>
-          <option value="agency">💼 Agencia de viajes</option>
-        </select>
+    <div className="min-h-screen bg-gray-50 font-sans p-4">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="p-6 md:p-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 text-center">
+              Configurar tu organización
+            </h1>
+            
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Rol */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Tipo de organización
+                </label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as "hotel" | "agency")}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 bg-white cursor-pointer"
+                >
+                  <option value="hotel">🏨 Hotel</option>
+                  <option value="agency">💼 Agencia de viajes</option>
+                </select>
+              </div>
 
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre del hotel o agencia"
-          required
-          style={{ width: "100%", padding: "8px", margin: "8px 0" }}
-        />
+              {/* Nombre */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nombre de la organización
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Nombre del hotel o agencia"
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
+                />
+              </div>
 
-        <input
-          type="text"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder="Dirección completa"
-          required
-          style={{ width: "100%", padding: "8px", margin: "8px 0" }}
-        />
+              {/* Dirección */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Dirección completa
+                </label>
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Dirección completa"
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
+                />
+              </div>
 
-        <label style={{ display: "block", marginTop: "1rem" }}>País:</label>
-        <select
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
-          style={{ width: "100%", padding: "8px", margin: "8px 0" }}
-        >
-          {countries.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+              {/* Ubicación */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    País
+                  </label>
+                  <select
+                    value={selectedCountry}
+                    onChange={(e) => handleCountryChange(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 bg-white cursor-pointer"
+                  >
+                    <option value="">Seleccionar país...</option>
+                    {COUNTRIES.map(country => (
+                      <option key={country.value} value={country.value}>
+                        {country.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Provincia / Estado
+                  </label>
+                  <select
+                    value={selectedProvince}
+                    onChange={(e) => handleProvinceChange(e.target.value)}
+                    disabled={!selectedCountry}
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 ${
+                      !selectedCountry ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'
+                    }`}
+                  >
+                    <option value="">Seleccionar provincia...</option>
+                    {availableProvinces.map(province => (
+                      <option key={province.value} value={province.value}>
+                        {province.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Ciudad / Localidad
+                  </label>
+                  <select
+                    value={getCurrentCity("")}
+                    onChange={(e) => {
+                      // No necesitamos hacer nada aquí, el hook maneja el estado
+                    }}
+                    disabled={!selectedProvince}
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 ${
+                      !selectedProvince ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'
+                    }`}
+                  >
+                    <option value="">Seleccionar ciudad...</option>
+                    {availableCities.map(city => (
+                      <option key={city.value} value={city.value}>
+                        {city.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
-        <label style={{ display: "block", marginTop: "1rem" }}>Provincia / Estado:</label>
-        <select
-          value={province}
-          onChange={(e) => setProvince(e.target.value)}
-          style={{ width: "100%", padding: "8px", margin: "8px 0" }}
-          disabled={!provincesList.length}
-        >
-          {provincesList.map(p => <option key={p} value={p}>{p}</option>)}
-        </select>
+              {/* Teléfono */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Teléfono de contacto
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setPhone(value);
+                    if (value && !validatePhone(value)) {
+                      setPhoneError("Número de teléfono no válido");
+                    } else {
+                      setPhoneError("");
+                    }
+                  }}
+                  placeholder="+34 612 345 678"
+                  required
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-blue-500 outline-none text-gray-900 ${
+                    phoneError 
+                      ? "border-red-500 focus:ring-red-500" 
+                      : "border-gray-300 focus:ring-blue-500"
+                  }`}
+                />
+                {phoneError && (
+                  <p className="mt-1 text-sm text-red-600 font-medium">
+                    {phoneError}
+                  </p>
+                )}
+              </div>
 
-        <label style={{ display: "block", marginTop: "1rem" }}>Ciudad / Localidad:</label>
-        <select
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          style={{ width: "100%", padding: "8px", margin: "8px 0" }}
-          disabled={!citiesList.length}
-        >
-          {citiesList.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+              {/* Sitio web */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Sitio web (opcional)
+                </label>
+                <input
+                  type="url"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://tuweb.com"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
+                />
+              </div>
 
-        {/* 👇 MODIFICADO: input de teléfono con validación */}
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => {
-            const value = e.target.value;
-            setPhone(value);
-            if (value && !validatePhone(value)) {
-              setPhoneError("Número de teléfono no válido");
-            } else {
-              setPhoneError("");
-            }
-          }}
-          placeholder="Número de contacto (ej: +34 612 345 678)"
-          required
-          style={{ width: "100%", padding: "8px", margin: "8px 0" }}
-        />
-        {/* 👇 NUEVO: mensaje de error */}
-        {phoneError && <p style={{ color: "red", fontSize: "0.875rem", margin: "4px 0" }}>{phoneError}</p>}
+              {/* Foto de perfil - AHORA OBLIGATORIA */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Foto de perfil
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                  required={!profileImageUrl}
+                  className={`w-full px-3 py-2 border rounded-lg bg-gray-50 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${
+                    imageError ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Formatos aceptados: JPG, PNG, GIF | Tamaño máximo: 5MB
+                </p>
+                {imageError && (
+                  <p className="mt-1 text-sm text-red-600 font-medium">
+                    {imageError}
+                  </p>
+                )}
+                {profileImagePreview && (
+                  <div className="mt-3 flex justify-center">
+                    <div className="relative">
+                      <img 
+                        src={profileImagePreview} 
+                        alt="Vista previa" 
+                        className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500 shadow-md"
+                      />
+                      <div className="absolute -bottom-2 -right-2 bg-green-500 text-white rounded-full p-1 shadow-md">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-        <input
-          type="url"
-          value={website}
-          onChange={(e) => setWebsite(e.target.value)}
-          placeholder="Sitio web (opcional)"
-          style={{ width: "100%", padding: "8px", margin: "8px 0" }}
-        />
+              {/* Campos específicos para hotel */}
+              {role === "hotel" && (
+                <div className="border-t border-gray-200 pt-6 space-y-5">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">
+                    Información del Hotel
+                  </h3>
+                  
+                  {/* Selector de categoría profesional B2B - OPCIÓN RECOMENDADA */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Categoría hotelera
+                    </label>
+                    <select
+                      value={stars}
+                      onChange={(e) => setStars(Number(e.target.value))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 bg-white cursor-pointer"
+                    >
+                      {STAR_CATEGORIES.map(category => (
+                        <option key={category.value} value={category.value}>
+                          {category.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Clasificación según estándares internacionales de la industria hotelera
+                    </p>
+                  </div>
 
-        {/* 👇 NUEVO: Campo para subir foto de perfil */}
-        <div style={{ marginTop: "1rem" }}>
-          <label>Foto de perfil (opcional)</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleProfileImageChange}
-            style={{ marginTop: "0.5rem", width: "100%" }}
-          />
-          {profileImagePreview && (
-            <img 
-              src={profileImagePreview} 
-              alt="Vista previa" 
-              style={{ width: "100px", height: "100px", objectFit: "cover", marginTop: "0.5rem", borderRadius: "8px" }}
-            />
-          )}
+                  {/* Tipos de establecimiento - CHIPS SUPERBORDEADOS */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      Tipos de establecimiento
+                    </label>
+                    {hotelTypeError && (
+                      <p className="mt-1 text-sm text-red-600 font-medium mb-2">
+                        {hotelTypeError}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {HOTEL_TYPES.map(type => (
+                        <button
+                          key={type.value}
+                          type="button"
+                          onClick={() => toggleHotelType(type.value)}
+                          className={`px-2.5 py-1 rounded border-2 text-xs font-medium transition-all ${
+                            hotelTypes.includes(type.value)
+                              ? "border-blue-500 bg-blue-50 text-blue-700"
+                              : "border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50"
+                          }`}
+                        >
+                          {type.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Selecciona uno o varios tipos que describan tu establecimiento
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Botón de envío */}
+              <button 
+                type="submit" 
+                className="w-full mt-2 px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white shadow-md hover:shadow-lg"
+              >
+                Guardar organización
+              </button>
+            </form>
+          </div>
         </div>
-
-        {role === "hotel" && (
-          <>
-            <label style={{ display: "block", marginTop: "1rem" }}>Estrellas:</label>
-            <select
-              value={stars}
-              onChange={(e) => setStars(Number(e.target.value))}
-              style={{ width: "100%", padding: "8px", margin: "8px 0" }}
-            >
-              {[1, 2, 3, 4, 5].map(num => (
-                <option key={num} value={num}>{num} ⭐</option>
-              ))}
-            </select>
-
-            <label style={{ display: "block", marginTop: "1rem" }}>Tipo de hotel:</label>
-            <select
-              value={hotelType}
-              onChange={(e) => setHotelType(e.target.value)}
-              style={{ width: "100%", padding: "8px", margin: "8px 0" }}
-            >
-              <option value="adults_only">Solo adultos</option>
-              <option value="family">Familiar</option>
-              <option value="boutique">Hotel boutique</option>
-              <option value="luxury">Lujo</option>
-              <option value="golf">Golf</option>
-              <option value="sun_and_beach">Sol y playa</option>
-              <option value="wellness">Wellness / Spa</option>
-              <option value="urban">Urbano</option>
-              <option value="budget">Económico</option>
-              <option value="aparthotel">Apartahotel</option>
-            </select>
-          </>
-        )}
-
-        <button type="submit" style={{ marginTop: "1rem", padding: "10px 20px", fontSize: "16px" }}>Guardar organización</button>
-      </form>
+      </div>
     </div>
   );
 }

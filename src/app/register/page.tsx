@@ -9,9 +9,9 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Validar que las contraseñas coincidan
   const validatePasswords = () => {
     if (password !== confirmPassword) {
       setPasswordError("Las contraseñas no coinciden");
@@ -27,10 +27,9 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validatePasswords()) {
-      return;
-    }
+    setFormError("");
+
+    if (!validatePasswords()) return;
 
     setLoading(true);
 
@@ -44,11 +43,10 @@ export default function RegisterPage() {
       });
 
       if (error) {
-        alert("Error: " + error.message);
+        setFormError(error.message);
         return;
       }
 
-      // Guardar rol para usar en setup-organization
       const savedRole = localStorage.getItem("userRole");
       if (savedRole) {
         sessionStorage.setItem("userRole", savedRole);
@@ -56,128 +54,128 @@ export default function RegisterPage() {
 
       alert("Registro exitoso. Revisa tu email para confirmar.");
     } catch (err) {
-      alert("Error inesperado: " + (err as Error).message);
+      setFormError("Ocurrió un error inesperado.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Validación en tiempo real al escribir
-  const handlePasswordChange = (value: string) => {
-    setPassword(value);
-    if (confirmPassword && value !== confirmPassword) {
-      setPasswordError("Las contraseñas no coinciden");
-    } else if (confirmPassword) {
-      setPasswordError("");
-    }
-  };
-
-  const handleConfirmPasswordChange = (value: string) => {
-    setConfirmPassword(value);
-    if (password && password !== value) {
-      setPasswordError("Las contraseñas no coinciden");
-    } else if (password) {
-      setPasswordError("");
-    }
-  };
-
   return (
-    <div style={{
-      minHeight: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      padding: "2rem",
-      backgroundColor: "#f9fafb"
-    }}>
-      <h2 style={{ marginBottom: "2rem", fontSize: "24px" }}>
-        Registrarse
-      </h2>
-      
-      <form onSubmit={handleSubmit} style={{ 
-        width: "100%", 
-        maxWidth: "400px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px"
-      }}>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Correo electrónico"
-          required
-          style={{
-            width: "100%",
-            padding: "12px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            fontSize: "16px"
-          }}
-        />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-white animate-fadeIn">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center border border-gray-100">
         
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => handlePasswordChange(e.target.value)}
-          placeholder="Contraseña (mínimo 6 caracteres)"
-          required
-          style={{
-            width: "100%",
-            padding: "12px",
-            border: passwordError ? "1px solid #ef4444" : "1px solid #d1d5db",
-            borderRadius: "8px",
-            fontSize: "16px"
-          }}
-        />
-        
-        <input
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => handleConfirmPasswordChange(e.target.value)}
-          placeholder="Confirmar contraseña"
-          required
-          style={{
-            width: "100%",
-            padding: "12px",
-            border: passwordError ? "1px solid #ef4444" : "1px solid #d1d5db",
-            borderRadius: "8px",
-            fontSize: "16px"
-          }}
-        />
-        
-        {passwordError && (
-          <p style={{ color: "#ef4444", fontSize: "14px", margin: "0" }}>
-            {passwordError}
-          </p>
+        <h2 className="text-3xl font-bold text-slate-800 mb-2">
+          Crear cuenta
+        </h2>
+
+        <p className="text-slate-500 mb-6">
+          Regístrate para comenzar
+        </p>
+
+        {formError && (
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-sm">
+            {formError}
+          </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading || !!passwordError || password !== confirmPassword || password.length < 6}
-          style={{
-            width: "100%",
-            padding: "14px",
-            backgroundColor: (password === confirmPassword && password.length >= 6) ? "#10b981" : "#9ca3af",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            fontSize: "16px",
-            fontWeight: "600",
-            cursor: loading ? "not-allowed" : "pointer"
-          }}
-        >
-          {loading ? "Creando cuenta..." : "Crear cuenta"}
-        </button>
-      </form>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
+          
+          <div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Correo electrónico"
+              required
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-50 text-slate-800 focus:outline-none focus:border-blue-500 transition"
+            />
+          </div>
 
-      <p style={{ marginTop: "2rem", color: "#64748b" }}>
-        ¿Ya tienes cuenta?{" "}
-        <a href="/" style={{ color: "#3b82f6", fontWeight: "600" }}>
-          Inicia sesión
-        </a>
-      </p>
+          <div>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (confirmPassword && e.target.value !== confirmPassword) {
+                  setPasswordError("Las contraseñas no coinciden");
+                } else {
+                  setPasswordError("");
+                }
+              }}
+              placeholder="Contraseña (mínimo 6 caracteres)"
+              required
+              className={`w-full px-4 py-3 rounded-lg border ${
+                passwordError ? "border-red-500" : "border-gray-300"
+              } bg-gray-50 text-slate-800 focus:outline-none focus:border-blue-500 transition`}
+            />
+          </div>
+
+          <div>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (password && password !== e.target.value) {
+                  setPasswordError("Las contraseñas no coinciden");
+                } else {
+                  setPasswordError("");
+                }
+              }}
+              placeholder="Confirmar contraseña"
+              required
+              className={`w-full px-4 py-3 rounded-lg border ${
+                passwordError ? "border-red-500" : "border-gray-300"
+              } bg-gray-50 text-slate-800 focus:outline-none focus:border-blue-500 transition`}
+            />
+          </div>
+
+          {passwordError && (
+            <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-sm">
+              {passwordError}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={
+              loading ||
+              !!passwordError ||
+              password !== confirmPassword ||
+              password.length < 6
+            }
+            className={`w-full py-3 rounded-lg text-white font-semibold transition ${
+              password === confirmPassword && password.length >= 6
+                ? "bg-emerald-500 hover:bg-emerald-600"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {loading ? "Creando cuenta..." : "Crear cuenta"}
+          </button>
+        </form>
+
+        <p className="mt-6 text-slate-500 text-sm">
+          ¿Ya tienes cuenta?{" "}
+          <a
+            href="/"
+            className="text-blue-600 font-semibold hover:underline"
+          >
+            Inicia sesión
+          </a>
+        </p>
+      </div>
+
+      {/* Animación global */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0 }
+          to { opacity: 1 }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.8s ease forwards;
+        }
+      `}</style>
     </div>
   );
 }

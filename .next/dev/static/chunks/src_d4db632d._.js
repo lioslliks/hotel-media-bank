@@ -1,0 +1,1340 @@
+(globalThis.TURBOPACK || (globalThis.TURBOPACK = [])).push([typeof document === "object" ? document.currentScript : undefined,
+"[project]/src/lib/supabaseClient.ts [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "supabase",
+    ()=>supabase
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = /*#__PURE__*/ __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/node_modules/@supabase/supabase-js/dist/index.mjs [app-client] (ecmascript) <locals>");
+;
+const supabaseUrl = ("TURBOPACK compile-time value", "https://konsrtuynhzqssakgdlw.supabase.co");
+const supabaseAnonKey = ("TURBOPACK compile-time value", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvbnNydHV5bmh6cXNzYWtnZGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NjAyNjQsImV4cCI6MjA4NTEzNjI2NH0.jQryirwSpavWFeVMTBim19mQEccAArqBtwi_4-r4KsY");
+// ✅ Añade esta verificación
+console.log("Supabase URL:", supabaseUrl);
+console.log("Supabase Key:", supabaseAnonKey);
+if ("TURBOPACK compile-time falsy", 0) //TURBOPACK unreachable
+;
+const supabase = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$supabase$2f$supabase$2d$js$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["createClient"])(supabaseUrl, supabaseAnonKey);
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
+}
+}),
+"[project]/src/hooks/useNotifications.ts [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "useNotifications",
+    ()=>useNotifications
+]);
+// src/hooks/useNotifications.ts
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/supabaseClient.ts [app-client] (ecmascript)");
+var _s = __turbopack_context__.k.signature();
+;
+;
+function useNotifications(userId) {
+    _s();
+    const [notifications, setNotifications] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [unreadCount, setUnreadCount] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(0);
+    const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
+    const loadNotifications = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "useNotifications.useCallback[loadNotifications]": async ()=>{
+            if (!userId) {
+                setNotifications([]);
+                setUnreadCount(0);
+                setLoading(false);
+                return;
+            }
+            try {
+                const { data, error } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].from('notifications').select('*').eq('user_id', userId).order('created_at', {
+                    ascending: false
+                }).limit(20);
+                if (error) throw error;
+                setNotifications(data || []);
+                setUnreadCount(data?.filter({
+                    "useNotifications.useCallback[loadNotifications]": (n)=>!n.is_read
+                }["useNotifications.useCallback[loadNotifications]"]).length || 0);
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            } finally{
+                setLoading(false);
+            }
+        }
+    }["useNotifications.useCallback[loadNotifications]"], [
+        userId
+    ]);
+    const markAsRead = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "useNotifications.useCallback[markAsRead]": async (notificationId)=>{
+            try {
+                const { error } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].from('notifications').update({
+                    is_read: true
+                }).eq('id', notificationId);
+                if (error) throw error;
+                setNotifications({
+                    "useNotifications.useCallback[markAsRead]": (prev)=>prev.map({
+                            "useNotifications.useCallback[markAsRead]": (n)=>n.id === notificationId ? {
+                                    ...n,
+                                    is_read: true
+                                } : n
+                        }["useNotifications.useCallback[markAsRead]"])
+                }["useNotifications.useCallback[markAsRead]"]);
+                setUnreadCount({
+                    "useNotifications.useCallback[markAsRead]": (prev)=>Math.max(0, prev - 1)
+                }["useNotifications.useCallback[markAsRead]"]);
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+    }["useNotifications.useCallback[markAsRead]"], []);
+    const markAllAsRead = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "useNotifications.useCallback[markAllAsRead]": async ()=>{
+            if (!userId) return;
+            try {
+                const { error } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].from('notifications').update({
+                    is_read: true
+                }).eq('user_id', userId).eq('is_read', false);
+                if (error) throw error;
+                setNotifications({
+                    "useNotifications.useCallback[markAllAsRead]": (prev)=>prev.map({
+                            "useNotifications.useCallback[markAllAsRead]": (n)=>({
+                                    ...n,
+                                    is_read: true
+                                })
+                        }["useNotifications.useCallback[markAllAsRead]"])
+                }["useNotifications.useCallback[markAllAsRead]"]);
+                setUnreadCount(0);
+            } catch (error) {
+                console.error('Error marking all notifications as read:', error);
+            }
+        }
+    }["useNotifications.useCallback[markAllAsRead]"], [
+        userId
+    ]);
+    const deleteNotification = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "useNotifications.useCallback[deleteNotification]": async (notificationId)=>{
+            try {
+                const { error } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].from('notifications').delete().eq('id', notificationId);
+                if (error) throw error;
+                setNotifications({
+                    "useNotifications.useCallback[deleteNotification]": (prev)=>prev.filter({
+                            "useNotifications.useCallback[deleteNotification]": (n)=>n.id !== notificationId
+                        }["useNotifications.useCallback[deleteNotification]"])
+                }["useNotifications.useCallback[deleteNotification]"]);
+                // Actualizar contador si la notificación eliminada estaba sin leer
+                setUnreadCount({
+                    "useNotifications.useCallback[deleteNotification]": (prev)=>Math.max(0, prev - 1)
+                }["useNotifications.useCallback[deleteNotification]"]);
+            } catch (error) {
+                console.error('Error deleting notification:', error);
+            }
+        }
+    }["useNotifications.useCallback[deleteNotification]"], []);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "useNotifications.useEffect": ()=>{
+            loadNotifications();
+            if (!userId) return;
+            const channel = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].channel(`notifications:${userId}`).on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'notifications',
+                filter: `user_id=eq.${userId}`
+            }, {
+                "useNotifications.useEffect.channel": (payload)=>{
+                    console.log('Realtime event:', payload.eventType, payload);
+                    if (payload.eventType === 'INSERT') {
+                        // Nueva notificación
+                        setNotifications({
+                            "useNotifications.useEffect.channel": (prev)=>[
+                                    payload.new,
+                                    ...prev
+                                ]
+                        }["useNotifications.useEffect.channel"]);
+                        if (!payload.new.is_read) {
+                            setUnreadCount({
+                                "useNotifications.useEffect.channel": (prev)=>prev + 1
+                            }["useNotifications.useEffect.channel"]);
+                        }
+                    } else if (payload.eventType === 'UPDATE') {
+                        // Notificación actualizada (marcada como leída/no leída)
+                        const oldNotification = notifications.find({
+                            "useNotifications.useEffect.channel.oldNotification": (n)=>n.id === payload.old.id
+                        }["useNotifications.useEffect.channel.oldNotification"]);
+                        const newNotification = payload.new;
+                        setNotifications({
+                            "useNotifications.useEffect.channel": (prev)=>prev.map({
+                                    "useNotifications.useEffect.channel": (n)=>n.id === newNotification.id ? {
+                                            ...n,
+                                            ...newNotification
+                                        } : n
+                                }["useNotifications.useEffect.channel"])
+                        }["useNotifications.useEffect.channel"]);
+                        // Actualizar contador si cambió el estado de lectura
+                        if (oldNotification && oldNotification.is_read !== newNotification.is_read) {
+                            if (newNotification.is_read) {
+                                setUnreadCount({
+                                    "useNotifications.useEffect.channel": (prev)=>Math.max(0, prev - 1)
+                                }["useNotifications.useEffect.channel"]);
+                            } else {
+                                setUnreadCount({
+                                    "useNotifications.useEffect.channel": (prev)=>prev + 1
+                                }["useNotifications.useEffect.channel"]);
+                            }
+                        }
+                    } else if (payload.eventType === 'DELETE') {
+                        // Notificación eliminada
+                        const deletedNotification = payload.old;
+                        setNotifications({
+                            "useNotifications.useEffect.channel": (prev)=>prev.filter({
+                                    "useNotifications.useEffect.channel": (n)=>n.id !== deletedNotification.id
+                                }["useNotifications.useEffect.channel"])
+                        }["useNotifications.useEffect.channel"]);
+                        // Actualizar contador si la notificación eliminada estaba sin leer
+                        if (!deletedNotification.is_read) {
+                            setUnreadCount({
+                                "useNotifications.useEffect.channel": (prev)=>Math.max(0, prev - 1)
+                            }["useNotifications.useEffect.channel"]);
+                        }
+                    }
+                }
+            }["useNotifications.useEffect.channel"]).subscribe();
+            return ({
+                "useNotifications.useEffect": ()=>{
+                    __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].removeChannel(channel);
+                }
+            })["useNotifications.useEffect"];
+        }
+    }["useNotifications.useEffect"], [
+        userId,
+        loadNotifications,
+        notifications
+    ]);
+    return {
+        notifications,
+        unreadCount,
+        loading: loading,
+        markAsRead,
+        markAllAsRead,
+        deleteNotification,
+        reload: loadNotifications
+    };
+}
+_s(useNotifications, "oKsTM4DLYTzY3KYUc+tEb0vHatw=");
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
+}
+}),
+"[project]/src/components/notifications/NotificationsDropdown.tsx [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>NotificationsDropdown
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
+// src/components/notifications/NotificationsDropdown.tsx
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+;
+var _s = __turbopack_context__.k.signature();
+;
+function NotificationsDropdown({ notifications, unreadCount, loading, markAsRead, markAllAsRead, deleteNotification }) {
+    _s();
+    const [isOpen, setIsOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "NotificationsDropdown.useEffect": ()=>{
+            const handleClickOutside = {
+                "NotificationsDropdown.useEffect.handleClickOutside": (event)=>{
+                    const target = event.target;
+                    if (!target.closest('.notifications-dropdown')) {
+                        setIsOpen(false);
+                    }
+                }
+            }["NotificationsDropdown.useEffect.handleClickOutside"];
+            document.addEventListener('mousedown', handleClickOutside);
+            return ({
+                "NotificationsDropdown.useEffect": ()=>document.removeEventListener('mousedown', handleClickOutside)
+            })["NotificationsDropdown.useEffect"];
+        }
+    }["NotificationsDropdown.useEffect"], []);
+    if (loading) {
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "notifications-dropdown",
+            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                className: "p-2 text-gray-400",
+                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("svg", {
+                    className: "w-5 h-5 animate-spin",
+                    fill: "none",
+                    stroke: "currentColor",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
+                        strokeLinecap: "round",
+                        strokeLinejoin: "round",
+                        strokeWidth: 2,
+                        d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    }, void 0, false, {
+                        fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                        lineNumber: 50,
+                        columnNumber: 13
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                    lineNumber: 49,
+                    columnNumber: 11
+                }, this)
+            }, void 0, false, {
+                fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                lineNumber: 48,
+                columnNumber: 9
+            }, this)
+        }, void 0, false, {
+            fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+            lineNumber: 47,
+            columnNumber: 7
+        }, this);
+    }
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+        className: "notifications-dropdown relative",
+        children: [
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                onClick: ()=>setIsOpen(!isOpen),
+                className: "p-2 text-gray-600 hover:text-gray-900 relative",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("svg", {
+                        className: "w-5 h-5",
+                        fill: "none",
+                        stroke: "currentColor",
+                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
+                            strokeLinecap: "round",
+                            strokeLinejoin: "round",
+                            strokeWidth: 2,
+                            d: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 88 6 11v3.159c0 .538-.314 1.036-.812 1.285L3.053 17h11.947zM17 19h-10v-2h10v2z"
+                        }, void 0, false, {
+                            fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                            lineNumber: 64,
+                            columnNumber: 11
+                        }, this)
+                    }, void 0, false, {
+                        fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                        lineNumber: 63,
+                        columnNumber: 9
+                    }, this),
+                    unreadCount > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                        className: "absolute top-1 right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center",
+                        children: unreadCount
+                    }, void 0, false, {
+                        fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                        lineNumber: 67,
+                        columnNumber: 11
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                lineNumber: 59,
+                columnNumber: 7
+            }, this),
+            isOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "p-4 border-b border-gray-200 flex items-center justify-between",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                className: "font-semibold text-gray-900",
+                                children: "Notificaciones"
+                            }, void 0, false, {
+                                fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                                lineNumber: 76,
+                                columnNumber: 13
+                            }, this),
+                            unreadCount > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                onClick: ()=>markAllAsRead(),
+                                className: "text-xs text-blue-600 hover:text-blue-700",
+                                children: "Marcar todo como leído"
+                            }, void 0, false, {
+                                fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                                lineNumber: 78,
+                                columnNumber: 15
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                        lineNumber: 75,
+                        columnNumber: 11
+                    }, this),
+                    notifications.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "p-6 text-center text-gray-500 text-sm",
+                        children: "No hay notificaciones nuevas"
+                    }, void 0, false, {
+                        fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                        lineNumber: 88,
+                        columnNumber: 13
+                    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "max-h-96 overflow-y-auto",
+                        children: notifications.map((notification)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: `flex items-start justify-between p-4 hover:bg-gray-50 transition-colors ${!notification.read ? 'bg-blue-50' : ''}`,
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "flex-1",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "text-sm font-medium text-gray-900",
+                                                children: notification.title
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                                                lineNumber: 101,
+                                                columnNumber: 21
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "text-xs text-gray-600 mt-1",
+                                                children: notification.message
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                                                lineNumber: 102,
+                                                columnNumber: 21
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "text-xs text-gray-400 mt-1",
+                                                children: notification.date
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                                                lineNumber: 103,
+                                                columnNumber: 21
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                                        lineNumber: 100,
+                                        columnNumber: 19
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "flex items-start gap-2 ml-3",
+                                        children: [
+                                            !notification.read && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                onClick: ()=>markAsRead(notification.id),
+                                                className: "text-xs text-blue-600 hover:text-blue-700",
+                                                children: "Marcar como leído"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                                                lineNumber: 107,
+                                                columnNumber: 23
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                onClick: ()=>deleteNotification(notification.id),
+                                                className: "text-gray-400 hover:text-red-500",
+                                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("svg", {
+                                                    className: "w-4 h-4",
+                                                    fill: "none",
+                                                    stroke: "currentColor",
+                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
+                                                        strokeLinecap: "round",
+                                                        strokeLinejoin: "round",
+                                                        strokeWidth: 2,
+                                                        d: "M6 18L18 6M6 6l12 12"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                                                        lineNumber: 119,
+                                                        columnNumber: 25
+                                                    }, this)
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                                                    lineNumber: 118,
+                                                    columnNumber: 23
+                                                }, this)
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                                                lineNumber: 114,
+                                                columnNumber: 21
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                                        lineNumber: 105,
+                                        columnNumber: 19
+                                    }, this)
+                                ]
+                            }, notification.id, true, {
+                                fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                                lineNumber: 94,
+                                columnNumber: 17
+                            }, this))
+                    }, void 0, false, {
+                        fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                        lineNumber: 92,
+                        columnNumber: 13
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+                lineNumber: 74,
+                columnNumber: 9
+            }, this)
+        ]
+    }, void 0, true, {
+        fileName: "[project]/src/components/notifications/NotificationsDropdown.tsx",
+        lineNumber: 58,
+        columnNumber: 5
+    }, this);
+}
+_s(NotificationsDropdown, "vl0Rt3/A8evyRPW1OQ1AhRk4UhU=");
+_c = NotificationsDropdown;
+var _c;
+__turbopack_context__.k.register(_c, "NotificationsDropdown");
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
+}
+}),
+"[project]/src/app/dashboard/page.tsx [app-client] (ecmascript)", ((__turbopack_context__) => {
+"use strict";
+
+__turbopack_context__.s([
+    "default",
+    ()=>Dashboard
+]);
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/supabaseClient.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useNotifications$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/hooks/useNotifications.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$notifications$2f$NotificationsDropdown$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/notifications/NotificationsDropdown.tsx [app-client] (ecmascript)");
+;
+var _s = __turbopack_context__.k.signature();
+// src/app/dashboard/page.tsx
+"use client";
+;
+;
+;
+;
+function Dashboard() {
+    _s();
+    const [org, setOrg] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [media, setMedia] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [approvedHotels, setApprovedHotels] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [expandedHotelId, setExpandedHotelId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
+    const [activeSection, setActiveSection] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("gallery");
+    const [totalMedia, setTotalMedia] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(0);
+    const [pendingRequests, setPendingRequests] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(0);
+    const [connectedAgencies, setConnectedAgencies] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(0);
+    const [totalHotels, setTotalHotels] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(0);
+    const [userId, setUserId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [selectedCategory, setSelectedCategory] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("all");
+    // Hook de notificaciones
+    const { notifications, unreadCount, loading: notificationsLoading, markAsRead, markAllAsRead, deleteNotification } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useNotifications$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useNotifications"])(userId);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "Dashboard.useEffect": ()=>{
+            const loadOrg = {
+                "Dashboard.useEffect.loadOrg": async ()=>{
+                    try {
+                        const { data: sessionData } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].auth.getSession();
+                        if (!sessionData?.session) {
+                            window.location.href = "/login";
+                            return;
+                        }
+                        const userId = sessionData.session.user.id;
+                        setUserId(userId);
+                        const { data: orgData } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].from("organizations").select("*").eq("created_by", userId).maybeSingle();
+                        if (!orgData) {
+                            window.location.href = "/setup-organization";
+                            return;
+                        }
+                        setOrg(orgData);
+                        // Cargar todas las imágenes del hotel
+                        if (orgData.role === "hotel") {
+                            const { data: mediaData } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].from("media").select("id, url, type, tags, category, quality_score").eq("hotel_id", orgData.id).order("created_at", {
+                                ascending: false
+                            });
+                            setMedia(mediaData || []);
+                            setTotalMedia(mediaData?.length || 0);
+                            // Contar solicitudes pendientes
+                            const { data: requestsData } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].from("agency_hotel_access").select("id").eq("hotel_id", orgData.id).eq("status", "pending");
+                            setPendingRequests(requestsData?.length || 0);
+                            // Contar agencias conectadas
+                            const { data: connectedData } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].from("agency_hotel_access").select("id").eq("hotel_id", orgData.id).eq("status", "approved");
+                            setConnectedAgencies(connectedData?.length || 0);
+                        }
+                        // Cargar hoteles aprobados para agencias
+                        if (orgData.role === "agency") {
+                            const { data: accessData } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].from("agency_hotel_access").select("hotel_id, status").eq("agency_id", orgData.id);
+                            if (accessData && Array.isArray(accessData)) {
+                                const approved = accessData.filter({
+                                    "Dashboard.useEffect.loadOrg.approved": (a)=>a.status === "approved"
+                                }["Dashboard.useEffect.loadOrg.approved"]);
+                                const pending = accessData.filter({
+                                    "Dashboard.useEffect.loadOrg.pending": (a)=>a.status === "pending"
+                                }["Dashboard.useEffect.loadOrg.pending"]);
+                                setTotalHotels(approved.length);
+                                setPendingRequests(pending.length);
+                                const hotelIds = approved.map({
+                                    "Dashboard.useEffect.loadOrg.hotelIds": (a)=>a.hotel_id
+                                }["Dashboard.useEffect.loadOrg.hotelIds"]);
+                                const { data: hotelsData } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].from("organizations").select("id, name").in("id", hotelIds);
+                                setApprovedHotels(hotelsData || []);
+                            }
+                        }
+                        setLoading(false);
+                    } catch (err) {
+                        console.error("Error loading data:", err);
+                        setLoading(false);
+                    }
+                }
+            }["Dashboard.useEffect.loadOrg"];
+            loadOrg();
+        }
+    }["Dashboard.useEffect"], []);
+    // Crear la lista filtrada por categoría
+    const filteredMedia = selectedCategory === "all" ? media : media.filter((m)=>m.category === selectedCategory);
+    // ⭐ Ordenar por calidad (primero las mejores)
+    const sortedMedia = [
+        ...filteredMedia
+    ].sort((a, b)=>{
+        const qa = a.quality_score ?? 0;
+        const qb = b.quality_score ?? 0;
+        return qb - qa; // mayor calidad primero
+    });
+    const toggleHotelGallery = (hotelId)=>{
+        if (expandedHotelId === hotelId) {
+            setExpandedHotelId(null);
+            setMedia([]);
+        } else {
+            setExpandedHotelId(hotelId);
+            __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].from("media").select("id, url, type, tags, category, quality_score").eq("hotel_id", hotelId).order("created_at", {
+                ascending: false
+            }).then(({ data })=>setMedia(data || []));
+        }
+    };
+    const handleLogout = async ()=>{
+        await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabaseClient$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["supabase"].auth.signOut();
+        window.location.href = "/";
+    };
+    if (loading) {
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "min-h-screen flex justify-center items-center bg-white",
+            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "p-8 bg-white rounded-xl shadow-sm text-center",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "w-8 h-8 mx-auto mb-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/dashboard/page.tsx",
+                        lineNumber: 183,
+                        columnNumber: 11
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                        className: "text-gray-600 text-base",
+                        children: "Cargando..."
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/dashboard/page.tsx",
+                        lineNumber: 184,
+                        columnNumber: 11
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/dashboard/page.tsx",
+                lineNumber: 182,
+                columnNumber: 9
+            }, this)
+        }, void 0, false, {
+            fileName: "[project]/src/app/dashboard/page.tsx",
+            lineNumber: 181,
+            columnNumber: 7
+        }, this);
+    }
+    if (!org) return null;
+    // Foto de perfil: usar profile_image si existe, sino avatar por defecto (SIN ESPACIOS)
+    const profileImage = org.profile_image ? org.profile_image : org.role === "hotel" ? `https://ui-avatars.com/api/?name=${encodeURIComponent(org.name)}&background=3b82f6&color=white` : `https://ui-avatars.com/api/?name=${encodeURIComponent(org.name)}&background=10b981&color=white`;
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+        className: "min-h-screen flex bg-gray-50 font-sans",
+        children: [
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("aside", {
+                className: "w-72 bg-gradient-to-b from-blue-800 to-blue-900 text-white p-6 fixed left-0 top-0 h-screen flex flex-col",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "flex items-center mb-8 pb-3 border-b border-white/10",
+                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
+                            className: "text-xl font-bold tracking-tight",
+                            children: "Hotel Media Bank"
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/dashboard/page.tsx",
+                            lineNumber: 205,
+                            columnNumber: 11
+                        }, this)
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/dashboard/page.tsx",
+                        lineNumber: 204,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "bg-blue-100 rounded-xl p-4 mb-8 shadow-sm",
+                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "flex items-center gap-4",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "w-14 h-14 rounded-full overflow-hidden flex-shrink-0",
+                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                                        src: profileImage,
+                                        alt: org.name,
+                                        className: "w-full h-full object-cover"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                        lineNumber: 212,
+                                        columnNumber: 15
+                                    }, this)
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                    lineNumber: 211,
+                                    columnNumber: 13
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "flex-1",
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                            className: "text-sm font-semibold text-blue-900 truncate mb-1",
+                                            children: org.name
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/dashboard/page.tsx",
+                                            lineNumber: 219,
+                                            columnNumber: 15
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                            className: "text-xs text-gray-600 capitalize",
+                                            children: org.role === "hotel" ? "Hotel" : "Agencia de viajes"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/dashboard/page.tsx",
+                                            lineNumber: 222,
+                                            columnNumber: 15
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                    lineNumber: 218,
+                                    columnNumber: 13
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/dashboard/page.tsx",
+                            lineNumber: 210,
+                            columnNumber: 11
+                        }, this)
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/dashboard/page.tsx",
+                        lineNumber: 209,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("nav", {
+                        className: "flex-1 flex flex-col gap-2 mb-8",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                onClick: ()=>{
+                                    setActiveSection("gallery");
+                                    window.location.href = "/dashboard";
+                                },
+                                className: `px-4 py-3.5 rounded-lg cursor-pointer font-medium text-sm transition-all ${activeSection === "gallery" ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/10"}`,
+                                children: "Dashboard"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                lineNumber: 231,
+                                columnNumber: 11
+                            }, this),
+                            org.role === "hotel" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                onClick: ()=>window.location.href = "/hotel-requests",
+                                className: `px-4 py-3.5 rounded-lg cursor-pointer font-medium text-sm transition-all ${activeSection === "requests" ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/10"}`,
+                                children: "Solicitudes"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                lineNumber: 246,
+                                columnNumber: 13
+                            }, this),
+                            org.role === "agency" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                onClick: ()=>window.location.href = "/agency-requests",
+                                className: `px-4 py-3.5 rounded-lg cursor-pointer font-medium text-sm transition-all ${activeSection === "requests" ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/10"}`,
+                                children: "Solicitar Acceso"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                lineNumber: 259,
+                                columnNumber: 13
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                onClick: ()=>window.location.href = "/profile",
+                                className: `px-4 py-3.5 rounded-lg cursor-pointer font-medium text-sm transition-all ${activeSection === "profile" ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/10"}`,
+                                children: "Mi Perfil"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                lineNumber: 271,
+                                columnNumber: 11
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/dashboard/page.tsx",
+                        lineNumber: 230,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "mt-auto pt-5 border-t border-white/10",
+                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                            onClick: handleLogout,
+                            className: "w-full flex items-center justify-center gap-2 py-0.5 text-blue-200/90 hover:text-white transition-colors text-sm font-medium",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("svg", {
+                                    className: "w-4 h-4",
+                                    fill: "none",
+                                    stroke: "currentColor",
+                                    viewBox: "0 0 24 24",
+                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
+                                        strokeLinecap: "round",
+                                        strokeLinejoin: "round",
+                                        strokeWidth: 2,
+                                        d: "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                        lineNumber: 290,
+                                        columnNumber: 15
+                                    }, this)
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                    lineNumber: 289,
+                                    columnNumber: 13
+                                }, this),
+                                "Cerrar Sesión"
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/dashboard/page.tsx",
+                            lineNumber: 285,
+                            columnNumber: 11
+                        }, this)
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/dashboard/page.tsx",
+                        lineNumber: 284,
+                        columnNumber: 9
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/dashboard/page.tsx",
+                lineNumber: 202,
+                columnNumber: 7
+            }, this),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
+                className: "flex-1 ml-72 bg-gray-50 p-8 overflow-y-auto",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "fixed top-0 left-72 right-0 h-16 bg-white shadow-sm flex items-center justify-between px-8 z-40",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "flex items-center gap-4",
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    className: "text-sm text-gray-500 uppercase font-semibold",
+                                    children: activeSection === "gallery" ? "Dashboard" : activeSection
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                    lineNumber: 302,
+                                    columnNumber: 13
+                                }, this)
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                lineNumber: 301,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "flex items-center gap-4",
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$notifications$2f$NotificationsDropdown$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                                    notifications: notifications,
+                                    unreadCount: unreadCount,
+                                    loading: notificationsLoading,
+                                    markAsRead: markAsRead,
+                                    markAllAsRead: markAllAsRead,
+                                    deleteNotification: deleteNotification
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                    lineNumber: 309,
+                                    columnNumber: 13
+                                }, this)
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                lineNumber: 307,
+                                columnNumber: 11
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/dashboard/page.tsx",
+                        lineNumber: 300,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "pt-24",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "mb-8",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                                        className: "text-3xl font-bold text-gray-900 mb-2",
+                                        children: org.role === "hotel" ? "Mi Galería" : "Hoteles Disponibles"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                        lineNumber: 324,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-gray-600 text-base",
+                                        children: org.role === "hotel" ? "Gestiona y comparte tu contenido multimedia con agencias autorizadas" : "Accede al contenido multimedia de tus hoteles asociados"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                        lineNumber: 327,
+                                        columnNumber: 13
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                lineNumber: 323,
+                                columnNumber: 11
+                            }, this),
+                            org.role === "hotel" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "max-w-7xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden",
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "p-8",
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "mb-6 flex flex-wrap gap-2",
+                                            children: [
+                                                {
+                                                    key: "all",
+                                                    label: "Todas"
+                                                },
+                                                {
+                                                    key: "exterior",
+                                                    label: "Exterior"
+                                                },
+                                                {
+                                                    key: "habitaciones",
+                                                    label: "Habitaciones"
+                                                },
+                                                {
+                                                    key: "interior",
+                                                    label: "Interior"
+                                                },
+                                                {
+                                                    key: "salas_comunes",
+                                                    label: "Salas comunes"
+                                                },
+                                                {
+                                                    key: "restaurante",
+                                                    label: "Restaurante"
+                                                },
+                                                {
+                                                    key: "piscina",
+                                                    label: "Piscina"
+                                                },
+                                                {
+                                                    key: "spa",
+                                                    label: "Spa"
+                                                },
+                                                {
+                                                    key: "otros",
+                                                    label: "Otros"
+                                                }
+                                            ].map((cat)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                    onClick: ()=>setSelectedCategory(cat.key),
+                                                    className: `px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${selectedCategory === cat.key ? "bg-blue-600 text-white border-blue-600 shadow-sm" : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"}`,
+                                                    children: cat.label
+                                                }, cat.key, false, {
+                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                    lineNumber: 351,
+                                                    columnNumber: 21
+                                                }, this))
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/dashboard/page.tsx",
+                                            lineNumber: 339,
+                                            columnNumber: 17
+                                        }, this),
+                                        sortedMedia.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "text-center py-16 px-8",
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "text-8xl mb-4 opacity-30"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                    lineNumber: 367,
+                                                    columnNumber: 21
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                                    className: "text-2xl font-bold text-gray-900 mb-1",
+                                                    children: selectedCategory === "all" ? "Bienvenido a tu galería" : `No hay contenido en la categoría "${selectedCategory.replace("_", " ")}"`
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                    lineNumber: 368,
+                                                    columnNumber: 21
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                    className: "text-gray-600 text-base mb-8 max-w-lg mx-auto",
+                                                    children: selectedCategory === "all" ? "Sube tus primeras fotos y videos para empezar a compartir tu contenido con agencias de viajes." : "No hay contenido multimedia en esta categoría. Sube contenido o cambia la categoría."
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                    lineNumber: 373,
+                                                    columnNumber: 21
+                                                }, this),
+                                                selectedCategory === "all" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                    onClick: ()=>window.location.href = "/hotel-media",
+                                                    className: "px-10 py-4 bg-blue-500 text-white rounded-lg font-semibold text-base shadow-md hover:bg-blue-600 hover:shadow-lg transition-all hover:-translate-y-0.5",
+                                                    children: "Subir mi primer contenido"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                    lineNumber: 379,
+                                                    columnNumber: 23
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
+                                            fileName: "[project]/src/app/dashboard/page.tsx",
+                                            lineNumber: 366,
+                                            columnNumber: 19
+                                        }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8",
+                                                    children: sortedMedia.map((item, index)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                            className: "rounded-xl overflow-hidden shadow-sm transition-all cursor-pointer bg-white hover:translate-y-[-4px] hover:shadow-lg",
+                                                            children: [
+                                                                item.type === "video" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                    className: "w-full pt-[75%] bg-gradient-to-br from-black to-gray-800 flex items-center justify-center text-white text-4xl relative",
+                                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                        className: "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
+                                                                        children: "🎥"
+                                                                    }, void 0, false, {
+                                                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                        lineNumber: 397,
+                                                                        columnNumber: 31
+                                                                    }, this)
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                    lineNumber: 396,
+                                                                    columnNumber: 29
+                                                                }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                                                                    src: item.url,
+                                                                    alt: `Media ${index}`,
+                                                                    loading: "lazy",
+                                                                    className: "w-full h-48 object-cover block transition-transform hover:scale-105"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                    lineNumber: 402,
+                                                                    columnNumber: 29
+                                                                }, this),
+                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                    className: "p-4 bg-gray-50 border-t border-gray-200",
+                                                                    children: [
+                                                                        item.category && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                            className: "text-xs font-semibold text-blue-600 mb-2 capitalize",
+                                                                            children: item.category.replace("_", " ")
+                                                                        }, void 0, false, {
+                                                                            fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                            lineNumber: 411,
+                                                                            columnNumber: 31
+                                                                        }, this),
+                                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                            className: "flex flex-wrap gap-1 mb-2",
+                                                                            children: item.tags?.map((tag)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                                    className: "bg-blue-50 text-blue-600 text-xs px-2 py-0.5 rounded",
+                                                                                    children: tag
+                                                                                }, tag, false, {
+                                                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                                    lineNumber: 418,
+                                                                                    columnNumber: 33
+                                                                                }, this))
+                                                                        }, void 0, false, {
+                                                                            fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                            lineNumber: 416,
+                                                                            columnNumber: 29
+                                                                        }, this),
+                                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                            className: "text-xs text-gray-500",
+                                                                            children: [
+                                                                                item.type === "video" ? "Video" : "Foto",
+                                                                                " — ",
+                                                                                new Date().toLocaleDateString()
+                                                                            ]
+                                                                        }, void 0, true, {
+                                                                            fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                            lineNumber: 427,
+                                                                            columnNumber: 29
+                                                                        }, this)
+                                                                    ]
+                                                                }, void 0, true, {
+                                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                    lineNumber: 409,
+                                                                    columnNumber: 27
+                                                                }, this)
+                                                            ]
+                                                        }, item.id || index, true, {
+                                                            fileName: "[project]/src/app/dashboard/page.tsx",
+                                                            lineNumber: 391,
+                                                            columnNumber: 25
+                                                        }, this))
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                    lineNumber: 389,
+                                                    columnNumber: 21
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "text-center mt-6",
+                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                        onClick: ()=>window.location.href = "/hotel-media",
+                                                        className: "px-8 py-3.5 bg-blue-50 text-blue-600 rounded-lg font-semibold text-sm hover:bg-blue-100 transition-all hover:-translate-y-0.5",
+                                                        children: "Subir o gestionar más contenido"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                                        lineNumber: 436,
+                                                        columnNumber: 23
+                                                    }, this)
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                    lineNumber: 435,
+                                                    columnNumber: 21
+                                                }, this)
+                                            ]
+                                        }, void 0, true)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                    lineNumber: 337,
+                                    columnNumber: 15
+                                }, this)
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                lineNumber: 336,
+                                columnNumber: 13
+                            }, this),
+                            org.role === "agency" && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "max-w-7xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden",
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "p-8",
+                                    children: approvedHotels.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "text-center py-16 px-8",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "text-8xl mb-4 opacity-30"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                                lineNumber: 454,
+                                                columnNumber: 21
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                                className: "text-2xl font-bold text-gray-900 mb-1",
+                                                children: "Sin acceso a hoteles"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                                lineNumber: 455,
+                                                columnNumber: 21
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "text-gray-600 text-base mb-8 max-w-lg mx-auto",
+                                                children: "Solicita acceso a hoteles para comenzar a explorar sus galerías de contenido."
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                                lineNumber: 458,
+                                                columnNumber: 21
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                onClick: ()=>window.location.href = "/agency-requests",
+                                                className: "px-10 py-4 bg-blue-500 text-white rounded-lg font-semibold text-base shadow-md hover:bg-blue-600 hover:shadow-lg transition-all hover:-translate-y-0.5",
+                                                children: "Solicitar acceso ahora"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                                lineNumber: 461,
+                                                columnNumber: 21
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                        lineNumber: 453,
+                                        columnNumber: 19
+                                    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6",
+                                            children: approvedHotels.map((hotel)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: `bg-white rounded-xl border ${expandedHotelId === hotel.id ? "border-blue-400 shadow-md" : "border-gray-200 hover:border-blue-300"} transition-all cursor-pointer`,
+                                                    onClick: ()=>toggleHotelGallery(hotel.id),
+                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        className: "p-5",
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                className: "flex items-start justify-between",
+                                                                children: [
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h4", {
+                                                                            className: `text-lg font-bold ${expandedHotelId === hotel.id ? "text-blue-600" : "text-gray-900"}`,
+                                                                            children: hotel.name
+                                                                        }, void 0, false, {
+                                                                            fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                            lineNumber: 485,
+                                                                            columnNumber: 33
+                                                                        }, this)
+                                                                    }, void 0, false, {
+                                                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                        lineNumber: 484,
+                                                                        columnNumber: 31
+                                                                    }, this),
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                        className: `w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${expandedHotelId === hotel.id ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"}`,
+                                                                        children: expandedHotelId === hotel.id ? "−" : "+"
+                                                                    }, void 0, false, {
+                                                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                        lineNumber: 491,
+                                                                        columnNumber: 31
+                                                                    }, this)
+                                                                ]
+                                                            }, void 0, true, {
+                                                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                lineNumber: 483,
+                                                                columnNumber: 29
+                                                            }, this),
+                                                            expandedHotelId === hotel.id && media.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                className: "mt-4 pt-4 border-t border-gray-200",
+                                                                children: [
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                        className: "mb-3",
+                                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                            className: "text-sm font-semibold text-gray-700",
+                                                                            children: [
+                                                                                "Contenido reciente (",
+                                                                                media.length,
+                                                                                " medios)"
+                                                                            ]
+                                                                        }, void 0, true, {
+                                                                            fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                            lineNumber: 504,
+                                                                            columnNumber: 35
+                                                                        }, this)
+                                                                    }, void 0, false, {
+                                                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                        lineNumber: 503,
+                                                                        columnNumber: 33
+                                                                    }, this),
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                        className: "grid grid-cols-3 gap-2 mb-4",
+                                                                        children: media.slice(0, 6).map((item, idx)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                className: "aspect-square rounded overflow-hidden border border-gray-200",
+                                                                                children: item.type === "video" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                    className: "w-full h-full bg-gray-800 flex items-center justify-center text-white text-lg",
+                                                                                    children: "▶"
+                                                                                }, void 0, false, {
+                                                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                                    lineNumber: 515,
+                                                                                    columnNumber: 41
+                                                                                }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                                                                                    src: item.url,
+                                                                                    alt: `Preview ${idx}`,
+                                                                                    className: "w-full h-full object-cover",
+                                                                                    onError: (e)=>{
+                                                                                        e.target.src = "https://via.placeholder.com/150?text=No+Image";
+                                                                                    }
+                                                                                }, void 0, false, {
+                                                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                                    lineNumber: 519,
+                                                                                    columnNumber: 41
+                                                                                }, this)
+                                                                            }, `preview-${idx}`, false, {
+                                                                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                                lineNumber: 510,
+                                                                                columnNumber: 37
+                                                                            }, this))
+                                                                    }, void 0, false, {
+                                                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                        lineNumber: 508,
+                                                                        columnNumber: 33
+                                                                    }, this),
+                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                        className: "flex gap-3",
+                                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                                            onClick: (e)=>{
+                                                                                e.stopPropagation();
+                                                                                window.location.href = `/hotel-gallery/${hotel.id}`;
+                                                                            },
+                                                                            className: "flex-1 bg-blue-500 text-white text-sm font-medium py-2 rounded-lg hover:bg-blue-600 transition-colors",
+                                                                            children: "Ver galería completa"
+                                                                        }, void 0, false, {
+                                                                            fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                            lineNumber: 532,
+                                                                            columnNumber: 35
+                                                                        }, this)
+                                                                    }, void 0, false, {
+                                                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                        lineNumber: 531,
+                                                                        columnNumber: 33
+                                                                    }, this)
+                                                                ]
+                                                            }, void 0, true, {
+                                                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                lineNumber: 502,
+                                                                columnNumber: 31
+                                                            }, this),
+                                                            expandedHotelId === hotel.id && media.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                className: "mt-4 pt-4 border-t border-gray-200 text-center py-4 bg-gray-50 rounded-lg",
+                                                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                    className: "text-gray-600 text-sm",
+                                                                    children: "Este hotel aún no ha subido contenido multimedia"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                    lineNumber: 547,
+                                                                    columnNumber: 33
+                                                                }, this)
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                                                lineNumber: 546,
+                                                                columnNumber: 31
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/dashboard/page.tsx",
+                                                        lineNumber: 482,
+                                                        columnNumber: 27
+                                                    }, this)
+                                                }, hotel.id, false, {
+                                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                                    lineNumber: 473,
+                                                    columnNumber: 25
+                                                }, this))
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/dashboard/page.tsx",
+                                            lineNumber: 471,
+                                            columnNumber: 21
+                                        }, this)
+                                    }, void 0, false)
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/dashboard/page.tsx",
+                                    lineNumber: 451,
+                                    columnNumber: 15
+                                }, this)
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/dashboard/page.tsx",
+                                lineNumber: 450,
+                                columnNumber: 13
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/dashboard/page.tsx",
+                        lineNumber: 321,
+                        columnNumber: 9
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/dashboard/page.tsx",
+                lineNumber: 298,
+                columnNumber: 7
+            }, this)
+        ]
+    }, void 0, true, {
+        fileName: "[project]/src/app/dashboard/page.tsx",
+        lineNumber: 200,
+        columnNumber: 5
+    }, this);
+}
+_s(Dashboard, "M6jtuthw+JmDxeWRNC/wq4V3pEI=", false, function() {
+    return [
+        __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useNotifications$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useNotifications"]
+    ];
+});
+_c = Dashboard;
+var _c;
+__turbopack_context__.k.register(_c, "Dashboard");
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
+}
+}),
+]);
+
+//# sourceMappingURL=src_d4db632d._.js.map

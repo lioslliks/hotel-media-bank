@@ -1,7 +1,7 @@
 // src/app/login/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { supabase } from "../../lib/supabaseClient";
 
 export default function LoginPage() {
@@ -21,25 +21,25 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      const { data: sessionData, error: authError } = await supabase.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (authError) throw authError;
-      if (!sessionData?.session) throw new Error("Sesión no disponible");
+      if (!data?.session) throw new Error("Sesión no disponible");
 
       // Verificar organización
       const { data: orgData, error: orgError } = await supabase
         .from("organizations")
         .select("role")
-        .eq("created_by", sessionData.session.user.id)
+        .eq("created_by", data.session.user.id)
         .maybeSingle();
 
       if (orgError) throw orgError;
@@ -71,87 +71,88 @@ export default function LoginPage() {
 
   if (expectedRole === null) {
     return (
-      <div style={{ 
-        minHeight: "100vh", 
-        display: "flex", 
-        justifyContent: "center", 
-        alignItems: "center",
-        backgroundColor: "#f8fafc"
-      }}>
-        <div>Redirigiendo...</div>
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <div className="p-8 bg-white rounded-xl shadow-sm text-center">
+          <div className="w-8 h-8 mx-auto mb-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-600 text-base">Redirigiendo...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      padding: "2rem",
-      backgroundColor: "#f9fafb"
-    }}>
-      <h2 style={{ marginBottom: "2rem", fontSize: "24px" }}>
-        Iniciar sesión como {expectedRole === "hotel" ? "hotel" : "agencia"}
-      </h2>
-      
-      {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
-      
-      <form onSubmit={handleSubmit} style={{ 
-        width: "100%", 
-        maxWidth: "400px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px"
-      }}>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Correo electrónico"
-          required
-          style={{
-            width: "100%",
-            padding: "12px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            fontSize: "16px"
-          }}
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Contraseña"
-          required
-          style={{
-            width: "100%",
-            padding: "12px",
-            border: "1px solid #d1d5db",
-            borderRadius: "8px",
-            fontSize: "16px"
-          }}
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "14px",
-            backgroundColor: expectedRole === "hotel" ? "#3b82f6" : "#10b981",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            fontSize: "16px",
-            fontWeight: "600",
-            cursor: loading ? "not-allowed" : "pointer"
-          }}
-        >
-          {loading ? "Iniciando..." : "Iniciar sesión"}
-        </button>
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-white p-4 sm:p-8">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 sm:p-10">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-1">
+            Iniciar sesión
+          </h2>
+          <p className="text-lg font-semibold text-gray-700 mb-1">
+            como {expectedRole === "hotel" ? "hotel" : "agencia"}
+          </p>
+          <p className="text-gray-500 text-sm">
+            Ingresa tus credenciales para continuar
+          </p>
+        </div>
+
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm text-left">
+            {error}
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Email input */}
+          <div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Correo electrónico"
+              required
+              className={`w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all ${
+                expectedRole === "hotel"
+                  ? "focus:ring-blue-500 focus:border-blue-500"
+                  : "focus:ring-emerald-500 focus:border-emerald-500"
+              }`}
+            />
+          </div>
+
+          {/* Password input */}
+          <div>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña"
+              required
+              className={`w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all ${
+                expectedRole === "hotel"
+                  ? "focus:ring-blue-500 focus:border-blue-500"
+                  : "focus:ring-emerald-500 focus:border-emerald-500"
+              }`}
+            />
+          </div>
+
+          {/* Submit button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 ${
+              loading
+                ? "opacity-75 cursor-not-allowed"
+                : expectedRole === "hotel"
+                ? "bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 focus:ring-offset-2"
+                : "bg-emerald-500 hover:bg-emerald-600 focus:ring-4 focus:ring-emerald-300 focus:ring-offset-2"
+            }`}
+          >
+            {loading ? "Iniciando..." : "Iniciar sesión"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

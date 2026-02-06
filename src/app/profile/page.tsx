@@ -3,6 +3,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import { COUNTRIES, useLocations } from '../../hooks/useLocations';
+import { useNotifications } from '../../hooks/useNotifications';
 
 interface Organization {
   id: string;
@@ -22,15 +24,188 @@ interface Organization {
 const HOTEL_TYPES = [
   { value: "adults_only", label: "Solo adultos" },
   { value: "family", label: "Familiar" },
-  { value: "boutique", label: "Hotel boutique" },
+  { value: "boutique", label: "Boutique" },
   { value: "luxury", label: "Lujo" },
   { value: "golf", label: "Golf" },
   { value: "sun_and_beach", label: "Sol y playa" },
-  { value: "wellness", label: "Wellness / Spa" },
+  { value: "wellness", label: "Wellness/Spa" },
   { value: "urban", label: "Urbano" },
   { value: "budget", label: "Económico" },
   { value: "aparthotel", label: "Apartahotel" },
 ];
+
+// Categorías hoteleras profesionales B2B
+const STAR_CATEGORIES = [
+  { value: 1, label: "1★ Económico" },
+  { value: 2, label: "2★ Estándar" },
+  { value: 3, label: "3★ Confort" },
+  { value: 4, label: "4★ Superior" },
+  { value: 5, label: "5★ Lujo" },
+];
+
+// Componente NotificationsDropdown - VERSIÓN COMPLETA SIN CHECK
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  date: string;
+  read?: boolean;
+}
+
+interface NotificationsDropdownProps {
+  notifications: Notification[];
+  unreadCount: number;
+  loading: boolean;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+  deleteNotification: (id: string) => void;
+}
+
+const NotificationsDropdown = ({ 
+  notifications, 
+  unreadCount, 
+  loading, 
+  markAsRead, 
+  markAllAsRead, 
+  deleteNotification 
+}: NotificationsDropdownProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.notifications-dropdown')) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="notifications-dropdown relative">
+      {/* Botón campana con efecto hover */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-2 text-gray-600 hover:text-blue-600 transition-all hover:-translate-y-0.5"
+      >
+        {/* Bell Icon */}
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M14.857 17.657A2 2 0 0113 19H11a2 2 0 01-1.857-1.343M6 8a6 6 0 1112 0c0 3.5 1.5 5 2 5.5H4c.5-.5 2-2 2-5.5z"
+          />
+        </svg>
+
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-semibold w-5 h-5 rounded-full flex items-center justify-center shadow">
+            {unreadCount}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 animate-fade-in-down">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+            <h3 className="font-semibold text-gray-900">Notificaciones</h3>
+
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                Marcar todo como leído
+              </button>
+            )}
+          </div>
+
+          {/* Loading */}
+          {loading && (
+            <div className="p-6 text-center text-gray-500 text-sm">
+              <div className="w-6 h-6 mx-auto mb-2 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              Cargando notificaciones...
+            </div>
+          )}
+
+          {/* Empty */}
+          {!loading && notifications.length === 0 && (
+            <div className="p-6 text-center text-gray-500 text-sm">
+              <div className="text-5xl mb-3 opacity-30">🔔</div>
+              No hay notificaciones
+            </div>
+          )}
+
+          {/* List - SIN ICONO DE CHECK */}
+          {!loading && notifications.length > 0 && (
+            <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
+              {notifications.map((n) => (
+                <div
+                  key={n.id}
+                  className={`flex items-start gap-3 px-4 py-4 transition-all cursor-pointer ${
+                    !n.read ? "bg-blue-50" : "hover:bg-gray-50"
+                  }`}
+                  onClick={() => !n.read && markAsRead(n.id)}
+                >
+                  {/* Indicador de no leído */}
+                  <div className="pt-1">
+                    {!n.read && (
+                      <span className="block w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
+                    )}
+                  </div>
+
+                  {/* Contenido */}
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {n.title}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">{n.message}</p>
+                    <p className="text-[11px] text-gray-400 mt-1">{n.date}</p>
+                  </div>
+
+                  {/* SOLO BOTÓN DE ELIMINAR */}
+                  <div className="flex items-start">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(n.id);
+                      }}
+                      className="text-gray-400 hover:text-red-600 hover:scale-110 transition-transform"
+                      title="Eliminar"
+                    >
+                      {/* X Icon */}
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function Profile() {
   const [org, setOrg] = useState<Organization | null>(null);
@@ -40,21 +215,50 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
   
-  // 👇 NUEVO: Estados para foto de perfil
+  // Hook de notificaciones
+  const {
+    notifications,
+    unreadCount,
+    loading: notificationsLoading,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications(userId);
+  
+  // Hook personalizado para ubicaciones
+  const { 
+    selectedCountry,
+    selectedProvince, 
+    availableProvinces,
+    availableCities, 
+    handleCountryChange,
+    handleProvinceChange,
+    getCurrentCountry,
+    getCurrentProvince,
+    getCurrentCity
+  } = useLocations();
+  
+  // Estados para foto de perfil
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  
+  // Estados para tipos de hotel (ahora solo un valor único)
+  const [selectedHotelType, setSelectedHotelType] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData?.session) {
+        const {  data } = await supabase.auth.getSession();
+        if (!data?.session) {
           window.location.href = "/login";
           return;
         }
 
-        const userId = sessionData.session.user.id;
+        const userId = data.session.user.id;
+        setUserId(userId);
+
         const { data: orgData } = await supabase
           .from("organizations")
           .select("*")
@@ -68,6 +272,20 @@ export default function Profile() {
 
         setOrg(orgData as Organization);
         setFormData(orgData);
+        
+        // Inicializar ubicaciones con los datos del perfil
+        if (orgData.country) {
+          handleCountryChange(orgData.country);
+        }
+        if (orgData.province) {
+          handleProvinceChange(orgData.province);
+        }
+        
+        // ✅ CORRECCIÓN: Solo un valor único para hotel_type
+        if (orgData.hotel_type) {
+          setSelectedHotelType(orgData.hotel_type);
+        }
+        
         setLoading(false);
       } catch (err) {
         console.error("Error loading profile:", err);
@@ -78,7 +296,7 @@ export default function Profile() {
     loadProfile();
   }, []);
 
-  // 👇 NUEVA: Función para subir imagen de perfil
+  // Función para subir imagen de perfil
   const uploadProfileImage = async () => {
     if (!profileImageFile || !org) return;
     
@@ -90,7 +308,7 @@ export default function Profile() {
       
       if (uploadError) throw uploadError;
       
-      const { data } = supabase.storage
+      const {  data } = await supabase.storage
         .from('profile-images')
         .getPublicUrl(fileName);
       
@@ -103,7 +321,7 @@ export default function Profile() {
       if (updateError) throw updateError;
       
       // Actualizar estado local
-      setOrg(prev => prev ? { ...prev, profile_image: data.publicUrl } : null);
+      setOrg(prev => prev ? { ...prev, profile_image: data.publicUrl } as Organization : null);
       setProfileImagePreview(null);
       setProfileImageFile(null);
       
@@ -123,6 +341,10 @@ export default function Profile() {
     }));
   };
 
+  const handleHotelTypeChange = (value: string) => {
+    setSelectedHotelType(prev => prev === value ? null : value);
+  };
+
   const handleSave = async () => {
     if (!org) return;
 
@@ -131,26 +353,33 @@ export default function Profile() {
     setSuccess("");
 
     try {
-      // 👇 Subir imagen primero si hay
+      // Subir imagen primero si hay
       let newProfileImage = org.profile_image;
       if (profileImageFile) {
         newProfileImage = await uploadProfileImage() || org.profile_image;
       }
 
+      // Construir objeto de actualización
+      const updateData: any = {
+        name: formData.name,
+        address: formData.address,
+        phone: formData.phone,
+        country: formData.country,
+        province: formData.province,
+        city: formData.city,
+        website: formData.website,
+        profile_image: newProfileImage
+      };
+
+      // ✅ CORRECCIÓN: Solo guardar un valor único para hotel_type
+      if (org.role === "hotel") {
+        updateData.stars = formData.stars ? parseInt(formData.stars as any) : null;
+        updateData.hotel_type = selectedHotelType; // Solo un valor
+      }
+
       const { error } = await supabase
         .from("organizations")
-        .update({
-          name: formData.name,
-          address: formData.address,
-          phone: formData.phone,
-          country: formData.country,
-          province: formData.province,
-          city: formData.city,
-          website: formData.website,
-          stars: formData.stars ? parseInt(formData.stars as any) : null,
-          hotel_type: formData.hotel_type,
-          profile_image: newProfileImage // 👈 Incluir la imagen
-        })
+        .update(updateData)
         .eq("id", org.id);
 
       if (error) throw error;
@@ -160,8 +389,22 @@ export default function Profile() {
       setSuccess("Perfil actualizado correctamente");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
+      // ✅ MANEJO ROBUSTO DE ERRORES
+      let errorMessage = "Error desconocido";
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'object' && err !== null) {
+        errorMessage = err.message || 
+                       err.error_description || 
+                       err.details || 
+                       JSON.stringify(err);
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+
       console.error("Error saving profile:", err);
-      setError("Error al guardar los cambios: " + (err as Error).message);
+      setError(`Error al guardar los cambios: ${errorMessage}`);
     } finally {
       setSaving(false);
     }
@@ -171,499 +414,511 @@ export default function Profile() {
     if (org) {
       setFormData(org);
       setIsEditing(false);
-      // 👇 Limpiar selección de imagen al cancelar
       setProfileImageFile(null);
       setProfileImagePreview(null);
+      
+      // Restaurar ubicaciones originales
+      if (org.country) {
+        handleCountryChange(org.country);
+      }
+      if (org.province) {
+        handleProvinceChange(org.province);
+      }
+      
+      // ✅ CORRECCIÓN: Restaurar un solo valor
+      if (org.hotel_type) {
+        setSelectedHotelType(org.hotel_type);
+      } else {
+        setSelectedHotelType(null);
+      }
     }
   };
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#f8fafc"
-      }}>
-        <div>Cargando perfil...</div>
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <div className="p-8 bg-white rounded-xl shadow-sm text-center">
+          <div className="w-8 h-8 mx-auto mb-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-600 text-base">Cargando perfil...</p>
+        </div>
       </div>
     );
   }
 
   if (!org) return null;
 
-  // 👇 Foto de perfil con vista previa
+  // ✅ CORRECCIÓN: Eliminar espacios extra en URLs de avatar
   const profileImage = profileImagePreview 
     ? profileImagePreview
     : org.profile_image 
       ? org.profile_image 
       : org.role === "hotel" 
-        ? "https://ui-avatars.com/api/?name=" + encodeURIComponent(org.name) + "&background=3b82f6&color=white"
-        : "https://ui-avatars.com/api/?name=" + encodeURIComponent(org.name) + "&background=10b981&color=white";
+        ? `https://ui-avatars.com/api/?name=${encodeURIComponent(org.name)}&background=3b82f6&color=white`
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(org.name)}&background=10b981&color=white`;
+
+  // Obtener etiqueta de categoría profesional
+  const getStarCategoryLabel = (stars: number | null) => {
+    if (!stars) return "No especificado";
+    const category = STAR_CATEGORIES.find(c => c.value === stars);
+    return category ? category.label : `${stars}★`;
+  };
+
+  // ✅ CORRECCIÓN: Procesar un solo valor
+  const getHotelTypeLabel = (hotelType: string | null) => {
+    if (!hotelType) return "No especificado";
+    return HOTEL_TYPES.find(t => t.value === hotelType)?.label || hotelType;
+  };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      backgroundColor: "#f8fafc",
-      padding: "2rem 1rem"
-    }}>
-      <div style={{
-        maxWidth: "800px",
-        margin: "0 auto",
-        backgroundColor: "white",
-        borderRadius: "20px",
-        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
-        overflow: "hidden",
-        position: "relative"
-      }}>
-        {/* Icono de engranaje dentro del marco */}
-        {!isEditing && (
-          <div style={{ 
-            position: "absolute", 
-            top: "1.5rem", 
-            left: "1.5rem",
-            zIndex: 10
-          }}>
-            <button
-              onClick={() => setIsEditing(true)}
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                backgroundColor: "#64748b",
-                color: "white",
-                border: "none",
-                cursor: "pointer",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                fontSize: "1.2rem"
-              }}
-              title="Editar perfil"
-            >
-              ⚙️
-            </button>
-          </div>
-        )}
+    <div className="min-h-screen bg-gray-50 font-sans">
+      {/* SIDEBAR */}
+      <aside className="w-72 bg-gradient-to-b from-blue-800 to-blue-900 text-white p-6 fixed left-0 top-0 h-screen flex flex-col">
+        {/* Header con logo */}
+        <div className="flex items-center mb-8 pb-3 border-b border-white/10">
+          <h1 className="text-xl font-bold tracking-tight">Hotel Media Bank</h1>
+        </div>
 
-        <div style={{ padding: "2.5rem 2.5rem 1.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", marginBottom: "2rem" }}>
-            <div style={{
-              width: "120px",
-              height: "120px",
-              borderRadius: "50%",
-              overflow: "hidden",
-              border: "3px solid white",
-              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
-            }}>
-              <img
-                src={profileImage}
-                alt={org.name}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            </div>
-            
-            <div>
-              <h1 style={{ 
-                fontSize: "1.75rem", 
-                fontWeight: "700",
-                color: "#1e293b",
-                margin: 0
-              }}>
-                {org.name}
-              </h1>
-              <p style={{ 
-                color: "#64748b", 
-                fontSize: "0.95rem",
-                marginTop: "0.5rem"
-              }}>
-                {org.role === "hotel" ? "🏨 Hotel" : "💼 Agencia de viajes"}
-              </p>
-            </div>
+        {/* Navigation menu */}
+        <nav className="flex-1 flex flex-col gap-2 mb-8">
+          <div 
+            onClick={() => window.location.href = "/dashboard"}
+            className="px-4 py-3.5 rounded-lg cursor-pointer font-medium text-sm transition-all text-white/80 hover:bg-white/10"
+          >
+            ← Volver al Dashboard
+          </div>
+        </nav>
+      </aside>
+
+      {/* MAIN CONTENT */}
+      <main className="ml-72 p-6">
+        {/* TOP BAR */}
+        <div className="fixed top-0 left-72 right-0 h-16 bg-white shadow-sm flex items-center justify-between px-6 z-40">
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-500 uppercase font-semibold">
+              Mi Perfil
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Notifications Dropdown */}
+            <NotificationsDropdown
+              notifications={notifications}
+              unreadCount={unreadCount}
+              loading={notificationsLoading}
+              markAsRead={markAsRead}
+              markAllAsRead={markAllAsRead}
+              deleteNotification={deleteNotification}
+            />
+          </div>
+        </div>
+
+        {/* Content with top padding */}
+        <div className="pt-24 max-w-3xl mx-auto">
+          {/* Header */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">
+              Mi Perfil
+            </h2>
+            <p className="text-gray-600 text-sm">
+              Gestiona la información de tu organización
+            </p>
           </div>
 
-          {error && <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>}
-          {success && <p style={{ color: "green", marginBottom: "1rem" }}>{success}</p>}
+          {/* Error/Success messages */}
+          {error && (
+            <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-red-800">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
-          <div style={{ 
-            display: "grid", 
-            gap: "1.5rem",
-            marginTop: "2rem"
-          }}>
-            {/* 👇 NUEVO: Campo para subir foto de perfil (solo en edición) */}
-            {isEditing && (
-              <div style={{ marginBottom: "1.5rem" }}>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: "0.5rem", 
-                  fontWeight: "600",
-                  color: "#374151"
-                }}>
-                  Foto de perfil
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setProfileImageFile(file);
-                      setProfileImagePreview(URL.createObjectURL(file));
-                    }
-                  }}
-                  style={{
-                    padding: "0.5rem",
-                    border: "1px solid #cbd5e1",
-                    borderRadius: "8px",
-                    width: "100%"
-                  }}
-                />
-                {(profileImagePreview || org?.profile_image) && (
-                  <div style={{ marginTop: "0.5rem" }}>
-                    <img
-                      src={profileImagePreview || org.profile_image!}
-                      alt="Foto de perfil"
-                      style={{
-                        width: "120px",
-                        height: "120px",
-                        objectFit: "cover",
-                        borderRadius: "50%",
-                        border: "2px solid #e2e8f0"
-                      }}
+          {success && (
+            <div className="mb-4 bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg animate-fade-in">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-green-800">{success}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Profile Card */}
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                      <img
+                        src={profileImage}
+                        alt={org.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    {isEditing && (
+                      <label className="absolute bottom-0 right-0 bg-blue-500 text-white rounded-full p-2 cursor-pointer hover:bg-blue-600 transition-colors shadow-md">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setProfileImageFile(file);
+                              setProfileImagePreview(URL.createObjectURL(file));
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                      {org.name}
+                    </h1>
+                    <p className="text-gray-600 mt-1 flex items-center gap-2">
+                      {org.role === "hotel" ? (
+                        <>
+                          <span>Hotel</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-green-500">💼</span>
+                          <span>Agencia de viajes</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                {!isEditing && (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700"
+                    title="Editar perfil"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-6">
+                {/* Nombre */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Nombre de la organización
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name || ""}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
+                      placeholder="Nombre de tu organización"
                     />
+                  ) : (
+                    <p className="text-lg text-gray-900 font-medium">{org.name}</p>
+                  )}
+                </div>
+
+                {/* Dirección */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Dirección
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="address"
+                      value={formData.address || ""}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
+                      placeholder="Dirección completa"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{org.address}</p>
+                  )}
+                </div>
+
+                {/* Ubicación - AHORA CON SELECTORES DESPLEGABLES */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      País
+                    </label>
+                    {isEditing ? (
+                      <select
+                        name="country"
+                        value={selectedCountry}
+                        onChange={(e) => {
+                          const country = handleCountryChange(e.target.value);
+                          setFormData(prev => ({ ...prev, country, province: "", city: "" }));
+                        }}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 bg-white"
+                      >
+                        <option value="">Seleccionar país...</option>
+                        {COUNTRIES.map(country => (
+                          <option key={country.value} value={country.value}>
+                            {country.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <p className="text-gray-900">{getCurrentCountry()}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Provincia/Distrito
+                    </label>
+                    {isEditing ? (
+                      <select
+                        name="province"
+                        value={selectedProvince}
+                        onChange={(e) => {
+                          const province = handleProvinceChange(e.target.value);
+                          setFormData(prev => ({ ...prev, province, city: "" }));
+                        }}
+                        disabled={!selectedCountry}
+                        className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 ${
+                          !selectedCountry ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'
+                        }`}
+                      >
+                        <option value="">Seleccionar provincia...</option>
+                        {availableProvinces.map(province => (
+                          <option key={province.value} value={province.value}>
+                            {province.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <p className="text-gray-900">{getCurrentProvince()}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Ciudad
+                    </label>
+                    {isEditing ? (
+                      <select
+                        name="city"
+                        value={formData.city || ""}
+                        onChange={handleInputChange}
+                        disabled={!selectedProvince}
+                        className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 ${
+                          !selectedProvince ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'
+                        }`}
+                      >
+                        <option value="">Seleccionar ciudad...</option>
+                        {availableCities.map(city => (
+                          <option key={city.value} value={city.value}>
+                            {city.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <p className="text-gray-900">{getCurrentCity(org.city)}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Teléfono */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Teléfono de contacto
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone || ""}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
+                      placeholder="+34 123 456 789"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{org.phone}</p>
+                  )}
+                </div>
+
+                {/* Sitio web */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Sitio web
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="url"
+                      name="website"
+                      value={formData.website || ""}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900"
+                      placeholder="https://tuweb.com  "
+                    />
+                  ) : (
+                    <p className="text-gray-900">
+                      {org.website ? (
+                        <a 
+                          href={org.website.startsWith('http') ? org.website : `https://${org.website}`}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-700 underline"
+                        >
+                          {org.website}
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">No especificado</span>
+                      )}
+                    </p>
+                  )}
+                </div>
+
+                {/* Específico para hoteles */}
+                {org.role === "hotel" && (
+                  <>
+                    <div className="border-t border-gray-200 pt-6">
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">
+                        Información del Hotel
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Categoría hotelera
+                          </label>
+                          {isEditing ? (
+                            <select
+                              name="stars"
+                              value={formData.stars || ""}
+                              onChange={handleInputChange}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 bg-white"
+                            >
+                              <option value="">Seleccionar categoría...</option>
+                              {STAR_CATEGORIES.map(category => (
+                                <option key={category.value} value={category.value}>
+                                  {category.label}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <p className="text-gray-900">
+                              {getStarCategoryLabel(org.stars)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Tipos de establecimiento - SELECCIÓN ÚNICA */}
+                      <div className="mt-4">
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Tipo de establecimiento
+                        </label>
+                        {isEditing ? (
+                          <div className="flex flex-wrap gap-2">
+                            {HOTEL_TYPES.map(type => (
+                              <button
+                                key={type.value}
+                                type="button"
+                                onClick={() => handleHotelTypeChange(type.value)}
+                                className={`px-2.5 py-1 rounded border-2 text-xs font-medium transition-all ${
+                                  selectedHotelType === type.value
+                                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                                    : "border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50"
+                                }`}
+                              >
+                                {type.label}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-gray-900">
+                            {getHotelTypeLabel(org.hotel_type)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Botones de acción */}
+                {isEditing && (
+                  <div className="pt-6 border-t border-gray-200 flex gap-3">
+                    <button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className={`px-6 py-3 rounded-lg font-semibold text-sm transition-all flex items-center justify-center ${
+                        saving
+                          ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                          : "bg-blue-500 text-white hover:bg-blue-600 hover:shadow-md"
+                      }`}
+                    >
+                      {saving ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Guardar cambios
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold text-sm hover:bg-gray-300 transition-colors"
+                    >
+                      Cancelar
+                    </button>
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Nombre */}
-            <div>
-              <label style={{ 
-                display: "block", 
-                marginBottom: "0.5rem", 
-                fontWeight: "600", 
-                color: "#374151" 
-              }}>
-                Nombre
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name || ""}
-                  onChange={handleInputChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    border: "1px solid #cbd5e1",
-                    borderRadius: "8px",
-                    fontSize: "1rem"
-                  }}
-                />
-              ) : (
-                <p style={{ fontSize: "1rem", color: "#475569" }}>{org.name}</p>
-              )}
             </div>
-
-            {/* Dirección */}
-            <div>
-              <label style={{ 
-                display: "block", 
-                marginBottom: "0.5rem", 
-                fontWeight: "600", 
-                color: "#374151" 
-              }}>
-                Dirección
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address || ""}
-                  onChange={handleInputChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    border: "1px solid #cbd5e1",
-                    borderRadius: "8px",
-                    fontSize: "1rem"
-                  }}
-                />
-              ) : (
-                <p style={{ fontSize: "1rem", color: "#475569" }}>{org.address}</p>
-              )}
-            </div>
-
-            {/* Ubicación */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
-              <div>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: "0.5rem", 
-                  fontWeight: "600", 
-                  color: "#374151" 
-                }}>
-                  Ciudad
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city || ""}
-                    onChange={handleInputChange}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      border: "1px solid #cbd5e1",
-                      borderRadius: "8px",
-                      fontSize: "1rem"
-                    }}
-                  />
-                ) : (
-                  <p style={{ fontSize: "1rem", color: "#475569" }}>{org.city}</p>
-                )}
-              </div>
-              
-              <div>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: "0.5rem", 
-                  fontWeight: "600", 
-                  color: "#374151" 
-                }}>
-                  Provincia
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="province"
-                    value={formData.province || ""}
-                    onChange={handleInputChange}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      border: "1px solid #cbd5e1",
-                      borderRadius: "8px",
-                      fontSize: "1rem"
-                    }}
-                  />
-                ) : (
-                  <p style={{ fontSize: "1rem", color: "#475569" }}>{org.province}</p>
-                )}
-              </div>
-              
-              <div>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: "0.5rem", 
-                  fontWeight: "600", 
-                  color: "#374151" 
-                }}>
-                  País
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name="country"
-                    value={formData.country || ""}
-                    onChange={handleInputChange}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      border: "1px solid #cbd5e1",
-                      borderRadius: "8px",
-                      fontSize: "1rem"
-                    }}
-                  />
-                ) : (
-                  <p style={{ fontSize: "1rem", color: "#475569" }}>{org.country}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Teléfono */}
-            <div>
-              <label style={{ 
-                display: "block", 
-                marginBottom: "0.5rem", 
-                fontWeight: "600", 
-                color: "#374151" 
-              }}>
-                Teléfono
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="phone"
-                  value={formData.phone || ""}
-                  onChange={handleInputChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    border: "1px solid #cbd5e1",
-                    borderRadius: "8px",
-                    fontSize: "1rem"
-                  }}
-                />
-              ) : (
-                <p style={{ fontSize: "1rem", color: "#475569" }}>{org.phone}</p>
-              )}
-            </div>
-
-            {/* Web */}
-            <div>
-              <label style={{ 
-                display: "block", 
-                marginBottom: "0.5rem", 
-                fontWeight: "600", 
-                color: "#374151" 
-              }}>
-                Sitio web
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="website"
-                  value={formData.website || ""}
-                  onChange={handleInputChange}
-                  placeholder="https://ejemplo.com"
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    border: "1px solid #cbd5e1",
-                    borderRadius: "8px",
-                    fontSize: "1rem"
-                  }}
-                />
-              ) : (
-                <p style={{ fontSize: "1rem", color: "#475569" }}>
-                  {org.website ? (
-                    <a href={org.website} target="_blank" rel="noreferrer" style={{ color: "#3b82f6" }}>
-                      {org.website}
-                    </a>
-                  ) : "-"}
-                </p>
-              )}
-            </div>
-
-            {/* Específico para hoteles */}
-            {org.role === "hotel" && (
-              <>
-                <div>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: "0.5rem", 
-                    fontWeight: "600", 
-                    color: "#374151" 
-                  }}>
-                    Estrellas
-                  </label>
-                  {isEditing ? (
-                    <select
-                      name="stars"
-                      value={formData.stars || ""}
-                      onChange={handleInputChange}
-                      style={{
-                        width: "100%",
-                        padding: "0.75rem",
-                        border: "1px solid #cbd5e1",
-                        borderRadius: "8px",
-                        fontSize: "1rem"
-                      }}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {[1,2,3,4,5].map(star => (
-                        <option key={star} value={star}>{star} {"⭐".repeat(star)}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <p style={{ fontSize: "1rem", color: "#475569" }}>
-                      {org.stars ? "⭐".repeat(org.stars) : "-"}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: "0.5rem", 
-                    fontWeight: "600", 
-                    color: "#374151" 
-                  }}>
-                    Tipo de hotel
-                  </label>
-                  {isEditing ? (
-                    <select
-                      name="hotel_type"
-                      value={formData.hotel_type || ""}
-                      onChange={handleInputChange}
-                      style={{
-                        width: "100%",
-                        padding: "0.75rem",
-                        border: "1px solid #cbd5e1",
-                        borderRadius: "8px",
-                        fontSize: "1rem"
-                      }}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {HOTEL_TYPES.map(type => (
-                        <option key={type.value} value={type.value}>{type.label}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <p style={{ fontSize: "1rem", color: "#475569" }}>
-                      {HOTEL_TYPES.find(t => t.value === org.hotel_type)?.label || "-"}
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Botones de acción */}
-            {isEditing && (
-              <div style={{ 
-                display: "flex", 
-                gap: "1rem", 
-                paddingTop: "1rem",
-                borderTop: "1px solid #e2e8f0"
-              }}>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  style={{
-                    padding: "0.75rem 1.5rem",
-                    backgroundColor: "#3b82f6",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontSize: "1rem",
-                    fontWeight: "600"
-                  }}
-                >
-                  {saving ? "Guardando..." : "Guardar cambios"}
-                </button>
-                <button
-                  onClick={handleCancel}
-                  style={{
-                    padding: "0.75rem 1.5rem",
-                    backgroundColor: "#64748b",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontSize: "1rem",
-                    fontWeight: "600"
-                  }}
-                >
-                  Cancelar
-                </button>
-              </div>
-            )}
           </div>
         </div>
-      </div>
+      </main>
+
+      {/* Estilos globales para animaciones */}
+      <style jsx global>{`
+        @keyframes fade-in-down {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in-down {
+          animation: fade-in-down 0.2s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
