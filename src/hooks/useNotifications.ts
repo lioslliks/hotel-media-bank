@@ -1,5 +1,4 @@
-// src/hooks/useNotifications.ts
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 export interface Notification {
@@ -12,13 +11,18 @@ export interface Notification {
   data: any;
   is_read: boolean;
   created_at: string;
-  date: string; // ✅ AÑADIDO: Propiedad requerida por NotificationsDropdown
+  related_id?: string;
+  date?: string;
 }
 
 export function useNotifications(userId: string | null) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  
+  // ✅ useRef para evitar dependencias inestables en el efecto
+  const notificationsRef = useRef<Notification[]>([]);
+  notificationsRef.current = notifications;
 
   const loadNotifications = useCallback(async () => {
     if (!userId) {
@@ -38,16 +42,17 @@ export function useNotifications(userId: string | null) {
 
       if (error) throw error;
 
-      // ✅ Mapear para añadir la propiedad `date` basada en `created_at`
-      const notificationsWithDate = (data || []).map((n: any) => ({
+      const notificationsClean = (data || []).map((n: any) => ({
         ...n,
-        date: n.created_at // Convertir created_at → date
+        date: undefined
       }));
 
-      setNotifications(notificationsWithDate);
-      setUnreadCount(notificationsWithDate.filter((n: Notification) => !n.is_read).length);
+      setNotifications(notificationsClean);
+      setUnreadCount(notificationsClean.filter((n: Notification) => !n.is_read).length);
     } catch (error) {
       console.error('Error loading notifications:', error);
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
@@ -100,7 +105,6 @@ export function useNotifications(userId: string | null) {
       if (error) throw error;
 
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
-      // Actualizar contador si la notificación eliminada estaba sin leer
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Error deleting notification:', error);
@@ -108,10 +112,15 @@ export function useNotifications(userId: string | null) {
   }, []);
 
   useEffect(() => {
+    // ✅ Cargar notificaciones al montar y cuando userId cambia
     loadNotifications();
 
-    if (!userId) return;
+    // ✅ Salir si no hay userId válido
+    if (!userId) {
+      return;
+    }
 
+    // ✅ Configurar canal de tiempo real SIN depender del estado notifications
     const channel = supabase
       .channel(`notifications:${userId}`)
       .on(
@@ -126,42 +135,44 @@ export function useNotifications(userId: string | null) {
           console.log('Realtime event:', payload.eventType, payload);
 
           if (payload.eventType === 'INSERT') {
-            // Nueva notificación
             const newNotification = {
               ...(payload.new as any),
-              date: (payload.new as any).created_at // ✅ Añadir date
+              date: undefined
             };
             setNotifications(prev => [newNotification as Notification, ...prev]);
+            
             if (!(payload.new as any).is_read) {
               setUnreadCount(prev => prev + 1);
             }
-          } else if (payload.eventType === 'UPDATE') {
-            // Notificación actualizada (marcada como leída/no leída)
-            const oldNotification = notifications.find(n => n.id === payload.old.id);
+          }
+          else if (payload.eventType === 'UPDATE') {
             const newNotification = {
               ...(payload.new as any),
-              date: (payload.new as any).created_at // ✅ Añadir date
+              date: undefined
             } as Notification;
 
             setNotifications(prev =>
               prev.map(n => (n.id === newNotification.id ? { ...n, ...newNotification } : n))
             );
 
-            // Actualizar contador si cambió el estado de lectura
-            if (oldNotification && oldNotification.is_read !== newNotification.is_read) {
-              if (newNotification.is_read) {
+            // ✅ USAR payload.old y payload.new DIRECTAMENTE (sin depender del estado)
+            const oldIsRead = (payload.old as any).is_read;
+            const newIsRead = (payload.new as any).is_read;
+            
+            if (oldIsRead !== newIsRead) {
+              if (newIsRead) {
                 setUnreadCount(prev => Math.max(0, prev - 1));
               } else {
                 setUnreadCount(prev => prev + 1);
               }
             }
-          } else if (payload.eventType === 'DELETE') {
-            // Notificación eliminada
+          }
+          else if (payload.eventType === 'DELETE') {
             const deletedNotification = payload.old as Notification;
             setNotifications(prev => prev.filter(n => n.id !== deletedNotification.id));
             
-            // Actualizar contador si la notificación eliminada estaba sin leer
-            if (!deletedNotification.is_read) {
+            // ✅ USAR payload.old DIRECTAMENTE para verificar is_read
+            if (!(payload.old as any).is_read) {
               setUnreadCount(prev => Math.max(0, prev - 1));
             }
           }
@@ -169,15 +180,16 @@ export function useNotifications(userId: string | null) {
       )
       .subscribe();
 
+    // ✅ Limpieza del canal al desmontar o cambiar userId
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, loadNotifications, notifications]);
+  }, [userId, loadNotifications]); // ✅ SOLO estas dos dependencias estables
 
   return {
     notifications,
     unreadCount,
-    loading: loading,
+    loading,
     markAsRead,
     markAllAsRead,
     deleteNotification,

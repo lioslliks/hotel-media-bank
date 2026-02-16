@@ -6,6 +6,7 @@ export interface Notification {
   title: string;
   message: string;
   date: string;
+  created_at?: string;
   read?: boolean;
 }
 
@@ -47,7 +48,6 @@ export default function NotificationsDropdown({
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-gray-900 transition"
       >
-        {/* Bell Icon */}
         <svg
           className="w-6 h-6"
           fill="none"
@@ -122,7 +122,9 @@ export default function NotificationsDropdown({
                       {n.title}
                     </p>
                     <p className="text-xs text-gray-600 mt-1">{n.message}</p>
-                    <p className="text-[11px] text-gray-400 mt-1">{n.date}</p>
+
+                    {/* Fecha oculta */}
+                    <p className="hidden">{n.date || n.created_at || ""}</p>
                   </div>
 
                   {/* Acciones */}
@@ -133,7 +135,6 @@ export default function NotificationsDropdown({
                         className="text-blue-600 hover:text-blue-700"
                         title="Marcar como leído"
                       >
-                        {/* Check Icon */}
                         <svg
                           className="w-4 h-4"
                           fill="none"
@@ -155,7 +156,6 @@ export default function NotificationsDropdown({
                       className="text-gray-400 hover:text-red-600"
                       title="Eliminar"
                     >
-                      {/* X Icon */}
                       <svg
                         className="w-4 h-4"
                         fill="none"

@@ -1,11 +1,3 @@
-{
-  "devFiles": [],
-  "ampDevFiles": [],
-  "polyfillFiles": [
-    "static/chunks/node_modules_next_dist_build_polyfills_polyfill-nomodule.js"
-  ],
-  "lowPriorityFiles": [],
-  "rootMainFiles": [],
-  "pages": {},
-  "ampFirstPages": []
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:b33e204043236c59a674e97f63c71d0a43b3643395519d31a4521ee69866c580
+size 234

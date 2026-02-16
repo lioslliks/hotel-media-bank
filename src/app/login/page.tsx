@@ -4,22 +4,53 @@
 import { useState, useEffect, FormEvent } from "react";
 import { supabase } from "../../lib/supabaseClient";
 
+// shadcn/ui
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [expectedRole, setExpectedRole] = useState<"hotel" | "agency" | null>(null);
+  const [expectedRole, setExpectedRole] = useState<"hotel" | "agency" | null>(
+    null
+  );
 
   useEffect(() => {
     const role = localStorage.getItem("loginRole");
     if (role === "hotel" || role === "agency") {
       setExpectedRole(role);
     } else {
-      // Si no hay rol, redirigir a inicio
       window.location.href = "/";
     }
   }, []);
+
+  // 🔹 Traducción de errores de Supabase
+  const translateError = (message: string) => {
+    if (message.includes("Invalid login credentials")) {
+      return "Credenciales incorrectas. Verifica tu correo y contraseña.";
+    }
+
+    if (message.includes("Email not confirmed")) {
+      return "Debes confirmar tu correo electrónico antes de iniciar sesión.";
+    }
+
+    if (message.includes("User not found")) {
+      return "No existe una cuenta con este correo electrónico.";
+    }
+
+    return "No se pudo iniciar sesión. Inténtalo de nuevo.";
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -27,15 +58,15 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
       if (authError) throw authError;
       if (!data?.session) throw new Error("Sesión no disponible");
 
-      // Verificar organización
       const { data: orgData, error: orgError } = await supabase
         .from("organizations")
         .select("role")
@@ -45,25 +76,23 @@ export default function LoginPage() {
       if (orgError) throw orgError;
 
       if (!orgData) {
-        // ❌ No tiene organización → ir a setup
         window.location.href = "/setup-organization";
         return;
       }
 
       if (orgData.role !== expectedRole) {
-        // ❌ Rol incorrecto
         await supabase.auth.signOut();
         throw new Error(
-          `Esta cuenta es de ${orgData.role === "hotel" ? "hotel" : "agencia"}. 
-           Por favor, usa el botón correcto en la página principal.`
+          `Esta cuenta es de ${
+            orgData.role === "hotel" ? "hotel" : "agencia"
+          }. Usa el botón correcto en la página principal.`
         );
       }
 
-      // ✅ Todo bien → ir al dashboard
       window.location.href = "/dashboard";
     } catch (err) {
-      console.error("Login error:", err);
-      setError("Error: " + (err as Error).message);
+      const rawMessage = (err as Error).message;
+      setError(translateError(rawMessage));
     } finally {
       setLoading(false);
     }
@@ -72,87 +101,94 @@ export default function LoginPage() {
   if (expectedRole === null) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-50">
-        <div className="p-8 bg-white rounded-xl shadow-sm text-center">
+        <Card className="p-8 shadow-md bg-white">
           <div className="w-8 h-8 mx-auto mb-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-600 text-base">Redirigiendo...</p>
-        </div>
+          <p className="text-gray-600 text-base text-center">
+            Redirigiendo...
+          </p>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-4 sm:p-8">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 sm:p-10">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-1">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-white to-gray-100">
+      <Card className="w-full max-w-md shadow-xl border border-gray-200 bg-white/80 backdrop-blur-xl rounded-2xl">
+        <CardHeader className="text-center pb-2">
+          <CardTitle className="text-3xl font-bold text-gray-900 tracking-tight">
             Iniciar sesión
-          </h2>
-          <p className="text-lg font-semibold text-gray-700 mb-1">
-            como {expectedRole === "hotel" ? "hotel" : "agencia"}
-          </p>
-          <p className="text-gray-500 text-sm">
-            Ingresa tus credenciales para continuar
-          </p>
-        </div>
+          </CardTitle>
 
-        {/* Error message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm text-left">
-            {error}
-          </div>
-        )}
+          <CardDescription className="text-gray-600 text-base mt-1">
+            Accede como {expectedRole === "hotel" ? "hotel" : "agencia"}
+          </CardDescription>
+        </CardHeader>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Email input */}
-          <div>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Correo electrónico"
-              required
-              className={`w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all ${
+        <CardContent className="pt-4">
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            {/* EMAIL */}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email" className="text-gray-700 font-medium">
+                Correo electrónico
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="tu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="h-12 text-base bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus-visible:ring-gray-400"
+              />
+            </div>
+
+            {/* PASSWORD */}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password" className="text-gray-700 font-medium">
+                Contraseña
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Tu contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="h-12 text-base bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus-visible:ring-gray-400"
+              />
+            </div>
+
+            {/* SUBMIT */}
+            <Button
+              type="submit"
+              disabled={loading}
+              className={`w-full h-12 text-base font-semibold rounded-xl shadow-md transition-all ${
                 expectedRole === "hotel"
-                  ? "focus:ring-blue-500 focus:border-blue-500"
-                  : "focus:ring-emerald-500 focus:border-emerald-500"
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-emerald-600 hover:bg-emerald-700"
               }`}
-            />
-          </div>
+            >
+              {loading ? "Iniciando..." : "Iniciar sesión"}
+            </Button>
+          </form>
 
-          {/* Password input */}
-          <div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Contraseña"
-              required
-              className={`w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all ${
-                expectedRole === "hotel"
-                  ? "focus:ring-blue-500 focus:border-blue-500"
-                  : "focus:ring-emerald-500 focus:border-emerald-500"
-              }`}
-            />
-          </div>
-
-          {/* Submit button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 ${
-              loading
-                ? "opacity-75 cursor-not-allowed"
-                : expectedRole === "hotel"
-                ? "bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 focus:ring-offset-2"
-                : "bg-emerald-500 hover:bg-emerald-600 focus:ring-4 focus:ring-emerald-300 focus:ring-offset-2"
-            }`}
-          >
-            {loading ? "Iniciando..." : "Iniciar sesión"}
-          </button>
-        </form>
-      </div>
+          <p className="mt-6 text-gray-600 text-sm text-center">
+            ¿No tienes cuenta?{" "}
+            <a
+              href="/register"
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              Regístrate aquí
+            </a>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

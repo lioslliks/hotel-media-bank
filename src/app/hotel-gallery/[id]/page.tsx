@@ -1,4 +1,3 @@
-// src/app/hotel-gallery/[id]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -10,10 +9,12 @@ interface MediaItem {
   id: string;
   url: string;
   type: string;
-  tags?: string[];
+  tags?: any;
   category?: string;
   quality_score?: number;
   created_at: string;
+  ai_title?: string;
+  versions?: any;
 }
 
 interface Hotel {
@@ -28,7 +29,6 @@ interface Hotel {
   profile_image?: string;
 }
 
-// Componente NotificationsDropdown - VERSIÓN COMPLETA SIN CHECK
 interface Notification {
   id: string;
   title: string;
@@ -70,12 +70,10 @@ const NotificationsDropdown = ({
 
   return (
     <div className="notifications-dropdown relative">
-      {/* Botón campana con efecto hover */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-blue-600 transition-all hover:-translate-y-0.5"
       >
-        {/* Bell Icon */}
         <svg
           className="w-6 h-6"
           fill="none"
@@ -99,7 +97,6 @@ const NotificationsDropdown = ({
 
       {isOpen && (
         <div className="absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 animate-fade-in-down">
-          {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
             <h3 className="font-semibold text-gray-900">Notificaciones</h3>
 
@@ -113,7 +110,6 @@ const NotificationsDropdown = ({
             )}
           </div>
 
-          {/* Loading */}
           {loading && (
             <div className="p-6 text-center text-gray-500 text-sm">
               <div className="w-6 h-6 mx-auto mb-2 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -121,7 +117,6 @@ const NotificationsDropdown = ({
             </div>
           )}
 
-          {/* Empty */}
           {!loading && notifications.length === 0 && (
             <div className="p-6 text-center text-gray-500 text-sm">
               <div className="text-5xl mb-3 opacity-30">🔔</div>
@@ -129,7 +124,6 @@ const NotificationsDropdown = ({
             </div>
           )}
 
-          {/* List - SIN ICONO DE CHECK */}
           {!loading && notifications.length > 0 && (
             <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
               {notifications.map((n) => (
@@ -140,14 +134,12 @@ const NotificationsDropdown = ({
                   }`}
                   onClick={() => !n.read && markAsRead(n.id)}
                 >
-                  {/* Indicador de no leído */}
                   <div className="pt-1">
                     {!n.read && (
                       <span className="block w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
                     )}
                   </div>
 
-                  {/* Contenido */}
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-gray-900">
                       {n.title}
@@ -156,7 +148,6 @@ const NotificationsDropdown = ({
                     <p className="text-[11px] text-gray-400 mt-1">{n.date}</p>
                   </div>
 
-                  {/* SOLO BOTÓN DE ELIMINAR */}
                   <div className="flex items-start">
                     <button
                       onClick={(e) => {
@@ -166,7 +157,6 @@ const NotificationsDropdown = ({
                       className="text-gray-400 hover:text-red-600 hover:scale-110 transition-transform"
                       title="Eliminar"
                     >
-                      {/* X Icon */}
                       <svg
                         className="w-4 h-4"
                         fill="none"
@@ -195,17 +185,17 @@ const NotificationsDropdown = ({
 export default function HotelGalleryPage() {
   const params = useParams();
   const router = useRouter();
-  const hotelId = params.id as string;
+  const hotelId = params?.id as string;
 
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<MediaItem | null>(null);
   const [showErrorReport, setShowErrorReport] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
-  // Hook de notificaciones
   const {
     notifications,
     unreadCount,
@@ -215,7 +205,6 @@ export default function HotelGalleryPage() {
     deleteNotification,
   } = useNotifications(userId);
 
-  // Selección múltiple
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
 
   const toggleSelectImage = (id: string) => {
@@ -224,19 +213,165 @@ export default function HotelGalleryPage() {
     );
   };
 
-  // Nuevo: Corrección de categorías problemáticas
+  const normalizeHotelGalleryTags = (raw: any): string[] => {
+    if (!raw) return [];
+    if (typeof raw === 'string') {
+      try {
+        return normalizeHotelGalleryTags(JSON.parse(raw));
+      } catch {
+        return [];
+      }
+    }
+    if (Array.isArray(raw)) {
+      return raw
+        .map(t => {
+          if (typeof t === 'string') {
+            try {
+              const parsed = JSON.parse(t);
+              return parsed?.label ?? t;
+            } catch {
+              return t;
+            }
+          }
+          if (typeof t === 'object') {
+            return t.label ?? t.tag ?? null;
+          }
+          return null;
+        })
+        .filter(Boolean)
+        .map(t => String(t).toLowerCase());
+    }
+    return [];
+  };
+
   const getCorrectedCategory = (item: MediaItem) => {
-    // Regla de negocio crítica: Si tiene tag "restaurant", debe ser categoría "restaurante"
     if (item.tags?.includes("restaurant")) {
       return "restaurante";
     }
-    
-    // Regla de negocio: Si tiene tag "suite", debe ser categoría "habitaciones"
     if (item.tags?.includes("suite")) {
       return "habitaciones";
     }
-    
     return item.category;
+  };
+
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Error al descargar la imagen:', error);
+      alert('Error al descargar la imagen. Inténtalo de nuevo.');
+    }
+  };
+
+  const renderDownloadTable = (versions: any) => {
+    if (!versions) return null;
+    
+    const originalDimensions = versions.original?.dimensions;
+    let originalWidth = 0;
+    let originalHeight = 0;
+
+    if (originalDimensions) {
+      const [w, h] = originalDimensions.split('x').map(Number);
+      originalWidth = w;
+      originalHeight = h;
+    }
+
+    const validVersions = Object.entries(versions)
+      .filter(([size, details]: [string, any]) => {
+        if (size === 'original') return true;
+        if (!details?.dimensions) return false;
+        const [w, h] = details.dimensions.split('x').map(Number);
+        return w <= originalWidth && h <= originalHeight;
+      })
+      .sort((a, b) => {
+        const order = ['thumbnail', 'small', 'medium', 'large', 'original'];
+        return order.indexOf(a[0]) - order.indexOf(b[0]);
+      });
+
+    return (
+      <div className="mt-6">
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Opciones de descarga</h4>
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 table-fixed">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                    Descripción
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                    Dimensiones
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                    Relación
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {validVersions.map(([size, details]: [string, any]) => (
+                  <tr key={size} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate">
+                      {size === 'thumbnail' ? 'Miniatura' : 
+                       size === 'small' ? 'Pequeño' : 
+                       size === 'medium' ? 'Mediano' : 
+                       size === 'large' ? 'Grande' : 'Original'}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 truncate">
+                      {details.dimensions}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 truncate">
+                      {details.aspect_ratio}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end gap-2">
+                        {/* ✅ BOTÓN DE DESCARGA CON ICONO ELEGANTE */}
+                        <button
+                          onClick={() =>
+                            handleDownload(details.url, `${size}-${Date.now()}.jpg`)
+                          }
+                          className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors shadow-sm hover:shadow-md"
+                          title="Descargar"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                        </button>
+                        
+                        {/* ✅ BOTÓN DE VER CON ICONO ELEGANTE */}
+                        <a
+                          href={details.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors shadow-sm hover:shadow"
+                          title="Ver imagen"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -290,11 +425,26 @@ export default function HotelGalleryPage() {
 
         const { data: mediaData } = await supabase
           .from("media")
-          .select("id, url, type, tags, category, quality_score, created_at")
+          .select("id, url, type, tags, category, quality_score, created_at, ai_title, versions")
           .eq("hotel_id", hotelId)
           .order("created_at", { ascending: false });
 
-        const sortedMedia = [...(mediaData || [])].sort((a, b) => {
+        const parsedMedia = mediaData?.map(item => {
+          let versions = item.versions;
+          if (versions && typeof versions === 'string') {
+            try {
+              versions = JSON.parse(versions);
+            } catch {
+              // keep as-is
+            }
+          }
+          return {
+            ...item,
+            versions
+          };
+        }) || [];
+
+        const sortedMedia = [...parsedMedia].sort((a, b) => {
           const qa = a.quality_score ?? 0;
           const qb = b.quality_score ?? 0;
           return qb - qa;
@@ -340,14 +490,11 @@ export default function HotelGalleryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
-      {/* SIDEBAR IZQUIERDO - AZUL GRADIENTE */}
       <aside className="w-72 bg-gradient-to-b from-blue-800 to-blue-900 text-white p-6 fixed left-0 top-0 h-screen flex flex-col">
-        {/* Header con logo */}
         <div className="flex items-center mb-8 pb-3 border-b border-white/10">
           <h1 className="text-xl font-bold tracking-tight">Hotel Media Bank</h1>
         </div>
 
-        {/* User profile mini */}
         {hotel && (
           <div className="bg-blue-100 rounded-xl p-4 mb-8 shadow-sm">
             <div className="flex items-center gap-3">
@@ -370,7 +517,6 @@ export default function HotelGalleryPage() {
           </div>
         )}
 
-        {/* Navigation menu */}
         <nav className="flex-1 flex flex-col gap-2 mb-8">
           <div 
             onClick={goBack}
@@ -383,7 +529,6 @@ export default function HotelGalleryPage() {
           </div>
         </nav>
 
-        {/* Logout button */}
         <div className="mt-auto pt-5 border-t border-white/10">
           <button
             onClick={handleLogout}
@@ -397,9 +542,7 @@ export default function HotelGalleryPage() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main className="ml-72 p-6">
-        {/* TOP BAR - MEJORADA */}
         <div className="fixed top-0 left-72 right-0 h-16 bg-white shadow-sm flex items-center justify-between px-8 z-40">
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-500 uppercase font-semibold">
@@ -408,7 +551,6 @@ export default function HotelGalleryPage() {
           </div>
           
           <div className="flex items-center gap-4">
-            {/* Notifications Dropdown */}
             <NotificationsDropdown
               notifications={notifications}
               unreadCount={unreadCount}
@@ -420,11 +562,8 @@ export default function HotelGalleryPage() {
           </div>
         </div>
 
-        {/* Main content with top padding */}
         <div className="pt-24">
           <div className="max-w-7xl mx-auto px-4">
-
-            {/* Filtro */}
             <div className="mb-8 flex flex-wrap gap-2">
               {[
                 { key: "all", label: "Todas" },
@@ -451,7 +590,6 @@ export default function HotelGalleryPage() {
               ))}
             </div>
 
-            {/* Botón de descarga por categoría */}
             {selectedCategory !== "all" && (
               <a
                 href={`/api/download-category?hotel=${hotelId}&category=${selectedCategory}`}
@@ -461,7 +599,6 @@ export default function HotelGalleryPage() {
               </a>
             )}
 
-            {/* Botón de descarga de galería completa */}
             {selectedCategory === "all" && (
               <a
                 href={`/api/download-gallery?hotel=${hotelId}`}
@@ -471,7 +608,6 @@ export default function HotelGalleryPage() {
               </a>
             )}
 
-            {/* Botón de descarga selección */}
             {selectedImages.length > 0 && (
               <a
                 href={`/api/download-selection?ids=${selectedImages.join(",")}`}
@@ -481,9 +617,7 @@ export default function HotelGalleryPage() {
               </a>
             )}
 
-            {/* Grid */}
             {filteredMedia.length === 0 ? (
-              // Mensaje de "sin contenido" mejorado para estética B2B
               <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
                 <h3 className="text-xl font-medium text-gray-700 mb-2">
                   {selectedCategory === "all"
@@ -498,19 +632,18 @@ export default function HotelGalleryPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredMedia.map((item) => (
+                {filteredMedia.map((item, index) => (
                   <div
                     key={item.id}
-                    className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer ${
-                      selectedImages.includes(item.id) 
-                        ? 'ring-2 ring-blue-500 ring-offset-2 scale-[1.01] shadow-md' 
-                        : 'hover:scale-[1.01]'
+                    className={`bg-white rounded-2xl overflow-hidden shadow-md cursor-pointer ${
+                      selectedImages.includes(item.id)
+                        ? 'ring-2 ring-blue-500 ring-offset-2'
+                        : ''
                     }`}
-                    onClick={() => setExpandedImage(item.url)}
+                    onClick={() => setSelectedImage(item)}
                   >
-                    <div className="relative group">
+                    <div className="relative">
 
-                      {/* Checkbox con animación mejorada */}
                       <label
                         htmlFor={`select-${item.id}`}
                         className="absolute top-3 right-3 z-20 cursor-pointer"
@@ -523,18 +656,16 @@ export default function HotelGalleryPage() {
                           onChange={() => toggleSelectImage(item.id)}
                           className="hidden"
                         />
-                        
-                        {/* Círculo exterior con animación */}
-                        <div 
-                          className={`relative w-6 h-6 rounded-full border-2 transition-all duration-300 ${
+
+                        <div
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
                             selectedImages.includes(item.id)
                               ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-300 bg-white hover:border-blue-400'
-                          } flex items-center justify-center`}
+                              : 'border-gray-300 bg-white'
+                          }`}
                         >
-                          {/* Punto central con animación de escala */}
-                          <div 
-                            className={`w-3 h-3 rounded-full transition-all duration-300 transform ${
+                          <div
+                            className={`w-3 h-3 rounded-full transition-all duration-300 ${
                               selectedImages.includes(item.id)
                                 ? 'bg-blue-500 scale-100 opacity-100'
                                 : 'bg-gray-300 scale-0 opacity-0'
@@ -546,74 +677,68 @@ export default function HotelGalleryPage() {
                       <img
                         src={item.url}
                         alt={item.category || "Hotel media"}
-                        className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="w-full h-64 object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src =
+                            "https://via.placeholder.com/400x300?text=Imagen+no+disponible";
+                        }}
                       />
-                      
-                      {/* Nuevo: Alerta de clasificación incorrecta */}
-                      {item.category !== getCorrectedCategory(item) && (
-                        <div className="absolute top-3 left-3 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium z-10">
-                          <span className="flex items-center gap-1">
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                            Corregir categoría
-                          </span>
-                        </div>
-                      )}
-                    </div>
 
-                    {/* INFO + ICONO DE DESCARGA */}
-                    <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-start">
-                      <div className="flex-1">
-                        {/* Usamos la categoría corregida */}
-                        {getCorrectedCategory(item) && (
-                          <p className="text-xs font-semibold text-blue-600 mb-2 capitalize">
-                            {getCorrectedCategory(item).replace("_", " ")}
-                          </p>
-                        )}
-
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {item.tags?.slice(0, 3).map((tag) => (
-                            <span
-                              key={tag}
-                              className="bg-blue-50 text-blue-600 text-xs px-2 py-0.5 rounded"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {item.tags && item.tags.length > 3 && (
-                            <span className="text-gray-400 text-xs">
-                              +{item.tags.length - 3}
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="text-xs text-gray-500">
-                          {item.type === "video" ? "Video" : "Foto"} —{" "}
-                          {new Date(item.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-
-                      <a
-                        href={`/api/download?url=${encodeURIComponent(item.url)}&id=${item.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="ml-3 text-gray-400 hover:text-blue-600 transition"
-                        title="Descargar"
+                      <div 
+                        className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-white/95 to-white/80 p-5"
+                        style={{
+                          transition: 'all 1200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          height: hoveredCard === item.id ? '160px' : '56px',
+                          overflow: 'hidden',
+                        }}
+                        onMouseEnter={() => setHoveredCard(item.id)}
+                        onMouseLeave={() => setHoveredCard(null)}
                       >
-                        <svg
-                          className="w-6 h-6"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
-                          />
-                        </svg>
-                      </a>
+                        <h3 className="text-sm font-semibold text-gray-900 leading-snug">
+                          {item.ai_title?.trim() ? item.ai_title : "Imagen del hotel"}
+                        </h3>
+
+                        {hoveredCard === item.id && (
+                          <div 
+                            className="mt-4 text-xs text-gray-700 space-y-2"
+                            style={{
+                              transition: 'opacity 800ms ease-out, transform 800ms ease-out',
+                              transform: hoveredCard === item.id ? 'translateY(0)' : 'translateY(10px)',
+                              opacity: hoveredCard === item.id ? 1 : 0,
+                            }}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-blue-600">🏷️</span>
+                              <span>{getCorrectedCategory(item)?.replace("_", " ") || "N/A"}</span>
+                            </div>
+
+                            {item.tags && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {normalizeHotelGalleryTags(item.tags).slice(0, 3).map((tag, i) => (
+                                  <span 
+                                    key={i} 
+                                    className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[11px] font-medium"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-blue-600">📅</span>
+                              <span>{item.created_at ? new Date(item.created_at).toLocaleDateString() : "Fecha no disponible"}</span>
+                            </div>
+
+                            {item.quality_score !== null && (
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium text-blue-600">⭐</span>
+                                <span>{item.quality_score}/100</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -623,32 +748,56 @@ export default function HotelGalleryPage() {
         </div>
       </main>
 
-      {/* Modal */}
-      {expandedImage && (
+      {/* ✅ PANEL DE DESCARGA OPTIMIZADO - SIN SCROLL Y 100% EN ESPAÑOL */}
+      {selectedImage && (
         <div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-          onClick={() => setExpandedImage(null)}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedImage(null)}
         >
-          <div className="relative max-w-4xl w-full">
-            <button
-              onClick={() => setExpandedImage(null)}
-              className="absolute top-4 right-4 text-white hover:text-gray-300 transition"
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-
-            <img
-              src={expandedImage}
-              alt="Expanded view"
-              className="w-full max-h-[80vh] object-contain"
-            />
+          <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[95vh] flex flex-col md:flex-row overflow-hidden shadow-2xl">
+            {/* Contenedor de imagen CENTRADO y ADAPTATIVO */}
+            <div className="md:w-1/2 flex items-center justify-center bg-gray-50 p-6 md:p-8 border-b md:border-b-0 md:border-r border-gray-200">
+              <div className="w-full max-w-[90%] max-h-[80vh] flex items-center justify-center">
+                <img 
+                  src={selectedImage.url} 
+                  alt={selectedImage.ai_title || "Imagen del hotel"}
+                  className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-lg"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+            
+            {/* Panel de descargas - SIN SCROLL Y 100% EN ESPAÑOL */}
+            <div className="md:w-1/2 p-6 md:p-8">
+              <div className="flex justify-between items-start mb-6 pb-4 border-b border-gray-200">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                    {selectedImage.ai_title?.trim() || "Imagen del hotel"}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {selectedImage.category?.replace("_", " ") || "Sin categoría"}
+                  </p>
+                </div>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedImage(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                  aria-label="Cerrar panel"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {renderDownloadTable(selectedImage.versions)}
+            </div>
           </div>
         </div>
       )}
       
-      {/* Nuevo: Componente de corrección de errores */}
       {showErrorReport && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
@@ -692,7 +841,6 @@ export default function HotelGalleryPage() {
                 </button>
                 <button
                   onClick={() => {
-                    // Aquí iría la lógica para reportar el error
                     console.log("Reportando error de clasificación");
                     setShowErrorReport(null);
                   }}
@@ -706,7 +854,6 @@ export default function HotelGalleryPage() {
         </div>
       )}
 
-      {/* Estilos globales para animaciones */}
       <style jsx global>{`
         @keyframes fade-in-down {
           from {

@@ -37,10 +37,10 @@ export default function HomePage() {
   useEffect(() => {
     const check = async (): Promise<void> => {
       try {
-        const {  data: sessionData } = await supabase.auth.getSession();
+        const { data: sessionData } = await supabase.auth.getSession();
 
         if (sessionData?.session) {
-          const {  data: orgData } = await supabase
+          const { data: orgData } = await supabase
             .from("organizations")
             .select("id")
             .eq("created_by", sessionData.session.user.id)
@@ -87,8 +87,8 @@ export default function HomePage() {
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80 backdrop-blur-sm"></div>
 
       {/* Contenido */}
-      <main className="relative z-10 max-w-2xl w-full text-center mt-24 md:mt-40 animate-fadeInSlow">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 drop-shadow-2xl">
+      <main className="relative z-10 max-w-2xl w-full text-center mt-32 md:mt-48 animate-fadeInSlow">
+        <h1 className="text-4xl md:text-5xl font-extrabold mb-4 bg-gradient-to-r from-blue-200 via-blue-300 to-blue-700 bg-clip-text text-transparent drop-shadow-md animate-wave">
           Hotel Media Bank
         </h1>
 
@@ -96,7 +96,7 @@ export default function HomePage() {
           Gestión visual inteligente para hoteles y agencias, diseñada para simplificar el acceso a contenido oficial
         </p>
 
-        {/* Botones de selección de rol - Alineados con el texto */}
+        {/* Botones */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-xl mx-auto">
           <Button
             onClick={() => {
@@ -131,7 +131,7 @@ export default function HomePage() {
           </Button>
         </div>
 
-        {/* Enlace de registro - Sin recuadro, solo texto */}
+        {/* Enlace registro */}
         <p className="text-gray-300 text-sm mt-8">
           ¿Eres nuevo?{" "}
           <a
@@ -146,7 +146,7 @@ export default function HomePage() {
         </p>
       </main>
 
-      {/* Footer mejorado */}
+      {/* Footer */}
       <footer className="fixed bottom-6 left-0 right-0 z-40">
         <div className="max-w-4xl mx-auto px-4">
           <div className="border-t border-white/0 pt-6">
@@ -159,7 +159,7 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Badge ExSabri IA - Mejorado */}
+      {/* Badge ExSabri IA */}
       <div className="fixed bottom-6 right-6 z-50">
         <div className="relative group">
           <div className="relative inline-flex items-center space-x-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer">
@@ -169,16 +169,15 @@ export default function HomePage() {
               <span className="font-light text-xs text-blue-300">IA</span>
             </div>
           </div>
-          
-          <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-white/95 backdrop-blur-sm text-gray-800 px-4 py-2 rounded-xl shadow-xl border border-gray-200 text-[13px] leading-[1.5] text-left w-[260px] animate-fadeInTooltip">
+
+          {/* Tooltip */}
+          <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-white/95 backdrop-blur-sm text-gray-800 px-4 py-2 rounded-xl shadow-xl border border-gray-200 text-[13px] leading-[1.5] text-left w-[439px] animate-fadeInTooltip">
             <div className="flex items-start gap-2">
-              <div className="mt-0.5">
-                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium">
-                ExSabri es nuestra tecnología para el etiquetado inteligente y clasificación automática de contenido visual
+              <div className="mt-0.5"></div>
+
+              <p className="text-sm font-medium leading-snug">
+                <span>ExSabri es nuestra tecnología para el etiquetado inteligente</span>
+                <span className="block">y clasificación automatizada de contenido visual</span>
               </p>
             </div>
           </div>
@@ -222,7 +221,26 @@ export default function HomePage() {
         .animate-fadeInTooltip {
           animation: fadeInTooltip 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
+
+        /* ⭐ Animación wave sutil para el degradado del título */
+        @keyframes waveGradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+
+        .animate-wave {
+          background-size: 200% 200%;
+          animation: waveGradient 20s ease-in-out infinite;
+        }
       `}</style>
     </div>
   );
 }
+``
