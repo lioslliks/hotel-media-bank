@@ -224,6 +224,7 @@ interface MediaItem {
   tags?: any;
   category?: string;
   quality_score?: number;
+  ai_quality?: string;
   created_at: string;
   versions?: any;
   ai_title?: string;
@@ -422,7 +423,7 @@ export default function HotelMediaPage() {
     
     const { data: mediaData } = await supabase
       .from("media")
-      .select("id, url, type, versions, tags, quality_score, ai_title, category, created_at")
+      .select("id, url, type, versions, tags, quality_score, ai_quality, ai_title, category, created_at")
       .eq("hotel_id", org.id)
       .order("created_at", { ascending: false });
 
@@ -477,7 +478,7 @@ export default function HotelMediaPage() {
           
           const { data: mediaData } = await supabase
             .from("media")
-            .select("id, url, type, versions, tags, quality_score, ai_title, category, created_at")
+            .select("id, url, type, versions, tags, quality_score, ai_quality, ai_title, category, created_at")
             .eq("hotel_id", orgData.id)
             .order("created_at", { ascending: false });
 

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import { QualityBadge } from "@/components/ui/QualityBadge"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -522,12 +523,7 @@ export default function Gallery({
                         <span className="font-medium text-blue-600">📅</span>
                         <span>{img.created_at ? new Date(img.created_at).toLocaleDateString() : "Fecha no disponible"}</span>
                       </div>
-                      {img.quality_score !== null && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium text-blue-600">⭐</span>
-                          <span>{qualityLabel(img.quality_score)}</span>
-                        </div>
-                      )}
+                      {img.ai_quality && ( <QualityBadge quality={img.ai_quality} /> )}
                     </div>
                   )}
                 </div>
