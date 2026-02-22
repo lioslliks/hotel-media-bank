@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useNotifications } from "../../hooks/useNotifications";
 import { useRouter } from "next/navigation";
+import VisualImpactGallery from "./VisualImpactGallery";
 
 /* =======================
    TYPES
@@ -698,20 +699,35 @@ export default function Dashboard() {
         </div>
 
         <div className="pt-24">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              {org.role === "hotel" ? "Mi Galería" : "Hoteles Disponibles"}
-            </h2>
-            <p className="text-gray-600 text-base max-w-2xl">
-              {org.role === "hotel"
-                ? "Gestiona y comparte tu contenido multimedia con agencias autorizadas"
-                : "Accede al contenido multimedia de tus hoteles asociados"}
-            </p>
-          </div>
 
-          {org.role === "hotel" && (
-            <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
-              <div className="p-8">
+  {/* TÍTULO + DESCRIPCIÓN */}
+  <div className="mb-8">
+    <h2 className="text-3xl font-bold text-gray-900 mb-2">
+      {org.role === "hotel" ? "Mi Galería" : "Hoteles Disponibles"}
+    </h2>
+    <p className="text-gray-600 text-base max-w-2xl">
+      {org.role === "hotel"
+        ? "Gestiona y comparte tu contenido multimedia con agencias autorizadas"
+        : "Accede al contenido multimedia de tus hoteles asociados"}
+    </p>
+  </div>
+
+  {/* 👇 AQUÍ VA VisualImpactGallery */}
+  {org.role === "hotel" && media.length > 0 && (
+  <div className="mb-12">
+    <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg">
+      <div className="p-8">
+        <VisualImpactGallery media={media} />
+      </div>
+    </div>
+  </div>
+)}
+
+
+  {/* 👇 DESPUÉS empieza la galería normal */}
+  {org.role === "hotel" && (
+    <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div className="p-8">
                 <div className="mb-6 flex flex-wrap gap-3">
                   {[
                     { key: "all", label: "Todas" },
@@ -1006,20 +1022,50 @@ export default function Dashboard() {
       )}
 
       <style jsx global>{`
-        @keyframes fade-in-down {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in-down {
-          animation: fade-in-down 0.2s ease-out;
-        }
-      `}</style>
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 0.2s ease-out;
+}
+
+/* =========================
+   BURBUJAS – MOVIMIENTO ORGÁNICO
+   ========================= */
+
+@keyframes bubbleFloatSlow {
+  0%   { transform: translate(-50%, -50%) translate(0px, 0px); }
+  25%  { transform: translate(-50%, -50%) translate(6px, -10px); }
+  50%  { transform: translate(-50%, -50%) translate(-4px, -18px); }
+  75%  { transform: translate(-50%, -50%) translate(5px, -10px); }
+  100% { transform: translate(-50%, -50%) translate(0px, 0px); }
+}
+
+@keyframes bubbleFloatMedium {
+  0%   { transform: translate(-50%, -50%) translate(0px, 0px); }
+  25%  { transform: translate(-50%, -50%) translate(-8px, -14px); }
+  50%  { transform: translate(-50%, -50%) translate(6px, -24px); }
+  75%  { transform: translate(-50%, -50%) translate(-6px, -14px); }
+  100% { transform: translate(-50%, -50%) translate(0px, 0px); }
+}
+
+@keyframes bubbleFloatLarge {
+  0%   { transform: translate(-50%, -50%) translate(0px, 0px); }
+  25%  { transform: translate(-50%, -50%) translate(10px, -18px); }
+  50%  { transform: translate(-50%, -50%) translate(-8px, -30px); }
+  75%  { transform: translate(-50%, -50%) translate(8px, -18px); }
+  100% { transform: translate(-50%, -50%) translate(0px, 0px); }
+}
+`}</style>
+
     </div>
   );
 }
